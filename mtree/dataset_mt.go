@@ -1,22 +1,11 @@
 package mtree
 
 import (
-	// "fmt"
 	"container/list"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	// "encoding/hex"
+	// "fmt"
+	"github.com/ethereum/go-ethereum/crypto"
 )
-
-type Word [128]byte
-
-type hashFunc func([]byte, []byte) common.Hash
-
-type node struct {
-	Data      common.Hash
-	NodeCount uint32
-	Proofs    *map[uint32]proof
-}
 
 type SPMerkleTree struct {
 	mtbuf          *list.List
@@ -101,10 +90,18 @@ func (mt *SPMerkleTree) insertNode(_node node) {
 	}
 }
 
-func _hash(a, b []byte) common.Hash {
-	result := [32]byte{}
-	keccak := crypto.Keccak256(a, b)
-	copy(result[:32], keccak[:])
+func _hash(a, b []byte) SPHash {
+	result := [HashLength]byte{}
+	var keccak []byte
+	if len(a) == 16 {
+		keccak = crypto.Keccak256(
+			append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, a...),
+			append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, b...),
+		)
+	} else {
+		keccak = crypto.Keccak256(a, b)
+	}
+	copy(result[:HashLength], keccak[HashLength:])
 	return result
 }
 
@@ -133,7 +130,7 @@ func (mt *SPMerkleTree) Finalize() {
 	mt.finalized = true
 }
 
-func (mt SPMerkleTree) Root() common.Hash {
+func (mt SPMerkleTree) Root() SPHash {
 	if mt.finalized {
 		return mt.mtbuf.Front().Value.(node).Data
 	}
@@ -153,12 +150,25 @@ func (mt SPMerkleTree) Proofs() map[uint32]proof {
 // then the function return an array of 4 hashes [a1, a2, b1, b2]
 // where a1, a2 are proof branch for element at index 1
 // b1, b2 are proof branch for element at index 2
-func (mt SPMerkleTree) ProofArray() []common.Hash {
+func (mt SPMerkleTree) ProofArray() []BranchElement {
 	if mt.finalized {
-		result := []common.Hash{}
+		result := []BranchElement{}
 		proofs := mt.Proofs()
 		for _, k := range mt.orderedIndexes {
-			result = append(result, proofs[k].ToArray()[1:]...)
+			// p := proofs[k]
+			// fmt.Printf("Index: %d\nRawData: %s\nHashedData: %s\n", k, hex.EncodeToString(p.RawData[:]), proofs[k].HashedData.Hex())
+			pfs := proofs[k].ToProofArray()[1:]
+			// fmt.Printf("Len proofs: %s\n", len(pfs))
+			for i := 0; i*2 < len(pfs); i++ {
+				// for anyone who is courious why i*2 + 1 comes before i * 2
+				// it's agreement between client side and contract side
+				if i*2+1 >= len(pfs) {
+					result = append(result, BranchElementFromHash(
+						SPHash{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, pfs[i*2]))
+				} else {
+					result = append(result, BranchElementFromHash(pfs[i*2+1], pfs[i*2]))
+				}
+			}
 		}
 		return result
 	}

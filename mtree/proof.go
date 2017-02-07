@@ -1,12 +1,8 @@
 package mtree
 
-import (
-	"github.com/ethereum/go-ethereum/common"
-)
-
 type proof struct {
 	RawData    Word
-	HashedData common.Hash
+	HashedData SPHash
 	Branch     *Branch
 }
 
@@ -14,6 +10,6 @@ func (p proof) String() string {
 	return p.Branch.InOrderTraversal()
 }
 
-func (p proof) ToArray() []common.Hash {
+func (p proof) ToProofArray() []SPHash {
 	return p.Branch.ToProofArray()
 }

@@ -105,13 +105,18 @@ func freeCache(cache *cache) {
 	cache.ptr = nil
 }
 
+func (cache *cache) getVerificationIndices(dagSize uint64, hash common.Hash, nonce uint64) []C.uint32_t {
+	ret := C.ethash_light_compute_internal(cache.ptr, C.uint64_t(dagSize), hashToH256(hash), C.uint64_t(nonce))
+	_ = cache
+	return ret.indices[:]
+}
+
 func (cache *cache) compute(dagSize uint64, hash common.Hash, nonce uint64) (ok bool, mixDigest, result common.Hash) {
 	ret := C.ethash_light_compute_internal(cache.ptr, C.uint64_t(dagSize), hashToH256(hash), C.uint64_t(nonce))
 	// Make sure cache is live until after the C call.
 	// This is important because a GC might happen and execute
 	// the finalizer before the call completes.
 	_ = cache
-  fmt.Printf("%v\n", ret.indices)
 	return bool(ret.success), h256ToHash(ret.mix_hash), h256ToHash(ret.result)
 }
 
@@ -125,6 +130,26 @@ type Light struct {
 	future *cache            // Pre-generated cache for the estimated future DAG
 
 	NumCaches int // Maximum number of caches to keep before eviction (only init, don't modify)
+}
+
+func (l *Light) GetVerificationIndices(block pow.Block) []uint32 {
+	blockNum := block.NumberU64()
+	if blockNum >= epochLength*2048 {
+		glog.V(logger.Debug).Infof("block number %d too high, limit is %d", epochLength*2048)
+		return []uint32{}
+	}
+	cache := l.getCache(blockNum)
+	dagSize := C.ethash_get_datasize(C.uint64_t(blockNum))
+	if l.test {
+		dagSize = dagSizeForTesting
+	}
+	// Recompute the hash using the cache.
+	indices := cache.getVerificationIndices(uint64(dagSize), block.HashNoNonce(), block.Nonce())
+	result := []uint32{}
+	for _, index := range indices {
+		result = append(result, uint32(index))
+	}
+	return result
 }
 
 // Verify checks whether the block's nonce is valid.

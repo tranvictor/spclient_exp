@@ -3,19 +3,18 @@ package mtree
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 type Branch struct {
-	Hash             common.Hash
+	Hash             SPHash
 	Left             *Branch
 	Right            *Branch
 	ElementOnTheLeft bool
 }
 
-func (b Branch) ToProofArray() []common.Hash {
+func (b Branch) ToProofArray() []SPHash {
 	if b.Left == nil && b.Right == nil {
-		return []common.Hash{b.Hash}
+		return []SPHash{b.Hash}
 	}
 	left := b.Left.ToProofArray()
 	right := b.Right.ToProofArray()
@@ -38,18 +37,18 @@ func (b Branch) InOrderTraversal() string {
 }
 
 // explain the operation
-func AcceptLeftSibling(b *Branch, h common.Hash) *Branch {
+func AcceptLeftSibling(b *Branch, h SPHash) *Branch {
 	return &Branch{
-		Hash:             common.Hash{},
+		Hash:             SPHash{},
 		Left:             &Branch{h, nil, nil, false},
 		Right:            b,
 		ElementOnTheLeft: false,
 	}
 }
 
-func AcceptRightSibling(b *Branch, h common.Hash) *Branch {
+func AcceptRightSibling(b *Branch, h SPHash) *Branch {
 	return &Branch{
-		Hash:             common.Hash{},
+		Hash:             SPHash{},
 		Right:            &Branch{h, nil, nil, false},
 		Left:             b,
 		ElementOnTheLeft: true,

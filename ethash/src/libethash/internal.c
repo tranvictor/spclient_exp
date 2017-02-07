@@ -205,7 +205,7 @@ static bool ethash_hash(
 	for (unsigned i = 0; i != ETHASH_ACCESSES; ++i) {
 		uint32_t const index = fnv_hash(s_mix->words[0] ^ i, mix->words[i % MIX_WORDS]) % num_full_pages;
 
-    ret->indices[i] = MIX_NODES * index;
+    ret->indices[i] = index;
 		for (unsigned n = 0; n != MIX_NODES; ++n) {
 			node const* dag_node;
 			if (full_nodes) {
