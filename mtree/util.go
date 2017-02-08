@@ -1,6 +1,8 @@
 package mtree
 
-func conventionalWord(data Word) ([]byte, []byte) {
+import "../common"
+
+func conventionalWord(data common.Word) ([]byte, []byte) {
 	first := rev(data[:32])
 	first = append(first, rev(data[32:64])...)
 	second := rev(data[64:96])

@@ -1,23 +1,22 @@
 package mtree
 
 import (
-	"encoding/hex"
-	"fmt"
+	"../common"
 )
 
-type Branch struct {
-	Hash             SPHash
-	Left             *Branch
-	Right            *Branch
+type BranchNode struct {
+	Hash             common.SPHash
+	Left             *BranchNode
+	Right            *BranchNode
 	ElementOnTheLeft bool
 }
 
-func (b Branch) ToProofArray() []SPHash {
+func (b BranchNode) ToHashArray() []common.SPHash {
 	if b.Left == nil && b.Right == nil {
-		return []SPHash{b.Hash}
+		return []common.SPHash{b.Hash}
 	}
-	left := b.Left.ToProofArray()
-	right := b.Right.ToProofArray()
+	left := b.Left.ToHashArray()
+	right := b.Right.ToHashArray()
 	if b.ElementOnTheLeft {
 		return append(left, right...)
 	} else {
@@ -25,31 +24,20 @@ func (b Branch) ToProofArray() []SPHash {
 	}
 }
 
-func (b Branch) InOrderTraversal() string {
-	if b.Left == nil && b.Right == nil {
-		return hex.EncodeToString(b.Hash[:])
-	}
-	return fmt.Sprintf(
-		"(%s,%s)",
-		b.Left.InOrderTraversal(),
-		b.Right.InOrderTraversal(),
-	)
-}
-
 // explain the operation
-func AcceptLeftSibling(b *Branch, h SPHash) *Branch {
-	return &Branch{
-		Hash:             SPHash{},
-		Left:             &Branch{h, nil, nil, false},
+func AcceptLeftSibling(b *BranchNode, h common.SPHash) *BranchNode {
+	return &BranchNode{
+		Hash:             common.SPHash{},
+		Left:             &BranchNode{h, nil, nil, false},
 		Right:            b,
 		ElementOnTheLeft: false,
 	}
 }
 
-func AcceptRightSibling(b *Branch, h SPHash) *Branch {
-	return &Branch{
-		Hash:             SPHash{},
-		Right:            &Branch{h, nil, nil, false},
+func AcceptRightSibling(b *BranchNode, h common.SPHash) *BranchNode {
+	return &BranchNode{
+		Hash:             common.SPHash{},
+		Right:            &BranchNode{h, nil, nil, false},
 		Left:             b,
 		ElementOnTheLeft: true,
 	}

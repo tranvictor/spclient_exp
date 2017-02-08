@@ -4,8 +4,17 @@ import (
 	"container/list"
 	// "encoding/hex"
 	// "fmt"
+	"../common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+type node struct {
+	Data      common.SPHash
+	NodeCount uint32
+	Branches  *map[uint32]BranchTree
+}
+
+type hashFunc func([]byte, []byte) common.SPHash
 
 type SPMerkleTree struct {
 	mtbuf          *list.List
@@ -15,7 +24,7 @@ type SPMerkleTree struct {
 	orderedIndexes []uint32
 }
 
-// register indexes to build proof branches
+// register indexes to build branches
 func (mt *SPMerkleTree) RegisterIndex(indexes ...uint32) {
 	for _, i := range indexes {
 		mt.indexes[i] = true
@@ -27,19 +36,19 @@ func (mt *SPMerkleTree) SetHashFunction(_h hashFunc) {
 	mt.h = _h
 }
 
-func (mt *SPMerkleTree) Insert(data Word, index uint32) {
+func (mt *SPMerkleTree) Insert(data common.Word, index uint32) {
 	// insert data into the mtbuf and aggregate the
 	// hashes
 	// because contract side is expecting the bytes
 	// to be reversed each 32 bytes on leaf nodes
 	first, second := conventionalWord(data)
-	_node := node{mt.h(first, second), 1, &map[uint32]proof{}}
+	_node := node{mt.h(first, second), 1, &map[uint32]BranchTree{}}
 	// fmt.Printf("Inserted node for word (%s): %4s\n", hex.EncodeToString(data[:]), hex.EncodeToString(_node.Data[:]))
 	if mt.indexes[index] {
-		(*_node.Proofs)[index] = proof{
+		(*_node.Branches)[index] = BranchTree{
 			RawData:    data,
 			HashedData: _node.Data,
-			Branch: &Branch{
+			Root: &BranchNode{
 				Hash:  _node.Data,
 				Left:  nil,
 				Right: nil,
@@ -63,19 +72,19 @@ func (mt *SPMerkleTree) insertNode(_node node) {
 		if cNode.NodeCount != prevNode.NodeCount {
 			break
 		}
-		if prevNode.Proofs != nil {
+		if prevNode.Branches != nil {
 			// fmt.Printf("Accepting right sibling\n")
-			for k, v := range *prevNode.Proofs {
-				v.Branch = AcceptRightSibling(v.Branch, cNode.Data)
-				(*prevNode.Proofs)[k] = v
+			for k, v := range *prevNode.Branches {
+				v.Root = AcceptRightSibling(v.Root, cNode.Data)
+				(*prevNode.Branches)[k] = v
 				// fmt.Printf("Proof: %v\n", v.String())
 			}
 		}
-		if cNode.Proofs != nil {
+		if cNode.Branches != nil {
 			// fmt.Printf("Accepting left sibling\n")
-			for k, v := range *cNode.Proofs {
-				v.Branch = AcceptLeftSibling(v.Branch, prevNode.Data)
-				(*prevNode.Proofs)[k] = v
+			for k, v := range *cNode.Branches {
+				v.Root = AcceptLeftSibling(v.Root, prevNode.Data)
+				(*prevNode.Branches)[k] = v
 				// fmt.Printf("Proof: %v\n", v.String())
 			}
 		}
@@ -90,8 +99,8 @@ func (mt *SPMerkleTree) insertNode(_node node) {
 	}
 }
 
-func _hash(a, b []byte) SPHash {
-	result := [HashLength]byte{}
+func _hash(a, b []byte) common.SPHash {
+	result := [common.HashLength]byte{}
 	var keccak []byte
 	if len(a) == 16 {
 		keccak = crypto.Keccak256(
@@ -101,7 +110,7 @@ func _hash(a, b []byte) SPHash {
 	} else {
 		keccak = crypto.Keccak256(a, b)
 	}
-	copy(result[:HashLength], keccak[HashLength:])
+	copy(result[:common.HashLength], keccak[common.HashLength:])
 	return result
 }
 
@@ -120,7 +129,7 @@ func (mt *SPMerkleTree) Finalize() {
 	if !mt.finalized && mt.mtbuf.Len() > 1 {
 		for {
 			dupNode := mt.mtbuf.Back().Value.(node)
-			dupNode.Proofs = &map[uint32]proof{}
+			dupNode.Branches = &map[uint32]BranchTree{}
 			mt.insertNode(dupNode)
 			if mt.mtbuf.Len() == 1 {
 				break
@@ -130,16 +139,16 @@ func (mt *SPMerkleTree) Finalize() {
 	mt.finalized = true
 }
 
-func (mt SPMerkleTree) Root() SPHash {
+func (mt SPMerkleTree) Root() common.SPHash {
 	if mt.finalized {
 		return mt.mtbuf.Front().Value.(node).Data
 	}
 	panic("SP Merkle tree needs to be finalized by calling mt.Finalize()")
 }
 
-func (mt SPMerkleTree) Proofs() map[uint32]proof {
+func (mt SPMerkleTree) Branches() map[uint32]BranchTree {
 	if mt.finalized {
-		return *(mt.mtbuf.Front().Value.(node).Proofs)
+		return *(mt.mtbuf.Front().Value.(node).Branches)
 	}
 	panic("SP Merkle tree needs to be finalized by calling mt.Finalize()")
 }
@@ -150,25 +159,39 @@ func (mt SPMerkleTree) Proofs() map[uint32]proof {
 // then the function return an array of 4 hashes [a1, a2, b1, b2]
 // where a1, a2 are proof branch for element at index 1
 // b1, b2 are proof branch for element at index 2
-func (mt SPMerkleTree) ProofArray() []BranchElement {
+func (mt SPMerkleTree) AllBranchesArray() []common.BranchElement {
 	if mt.finalized {
-		result := []BranchElement{}
-		proofs := mt.Proofs()
+		result := []common.BranchElement{}
+		branches := mt.Branches()
 		for _, k := range mt.orderedIndexes {
 			// p := proofs[k]
 			// fmt.Printf("Index: %d\nRawData: %s\nHashedData: %s\n", k, hex.EncodeToString(p.RawData[:]), proofs[k].HashedData.Hex())
-			pfs := proofs[k].ToProofArray()[1:]
+			hashes := branches[k].ToHashArray()[1:]
 			// fmt.Printf("Len proofs: %s\n", len(pfs))
-			for i := 0; i*2 < len(pfs); i++ {
+			for i := 0; i*2 < len(hashes); i++ {
 				// for anyone who is courious why i*2 + 1 comes before i * 2
 				// it's agreement between client side and contract side
-				if i*2+1 >= len(pfs) {
-					result = append(result, BranchElementFromHash(
-						SPHash{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, pfs[i*2]))
+				if i*2+1 >= len(hashes) {
+					result = append(result, common.BranchElementFromHash(
+						common.SPHash{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, hashes[i*2]))
 				} else {
-					result = append(result, BranchElementFromHash(pfs[i*2+1], pfs[i*2]))
+					result = append(result, common.BranchElementFromHash(hashes[i*2+1], hashes[i*2]))
 				}
 			}
+		}
+		return result
+	}
+	panic("SP Merkle tree needs to be finalized by calling mt.Finalize()")
+}
+
+func (mt SPMerkleTree) AllDAGElements() []common.Word {
+	if mt.finalized {
+		result := []common.Word{}
+		branches := mt.Branches()
+		for _, k := range mt.orderedIndexes {
+			// p := branches[k]
+			// fmt.Printf("Index: %d\nRawData: %s\nHashedData: %s\n", k, hex.EncodeToString(p.RawData[:]), proofs[k].HashedData.Hex())
+			result = append(result, branches[k].RawData)
 		}
 		return result
 	}

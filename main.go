@@ -1,8 +1,10 @@
 package main
 
 import (
+	spcommon "./common"
 	"./ethash"
 	"./mtree"
+	"./share"
 	"bufio"
 	"encoding/hex"
 	"fmt"
@@ -45,7 +47,7 @@ func processDuringRead(
 			fmt.Println(n)
 			log.Fatal("Malformed dataset")
 		}
-		mt.Insert(mtree.Word(buf), i)
+		mt.Insert(spcommon.Word(buf), i)
 		if err != nil && err != io.EOF {
 			log.Fatal(err)
 		}
@@ -73,7 +75,7 @@ func testVerifyShare() {
 		hashNoNonce: common.HexToHash("372eca2454ead349c3df0ab5d00b0b706b23e49d469387db91811cee0358fc6d"),
 		difficulty:  big.NewInt(132416),
 		nonce:       0x495732e0ed7a801c,
-		mixDigest:   common.HexToHash("2f74cdeb198af0b9abe65d22d372e22fb2d474371774a9583c1cc427a07939f5"),
+		mixDigest:   common.HexToHash("2f74cdeb198af0b9abe65d22d372e22fb2d474371774a9583c1cc427a07939f6"),
 	}
 	eth := ethash.New()
 	indices := eth.GetVerificationIndices(block)
@@ -100,12 +102,12 @@ func testDatasetMerkleTree(datasetPath string, indices []uint32) {
 	mt.Finalize()
 	result := mt.Root()
 	fmt.Printf("Merkle Root: %s\n", result.Hex())
-	// get proof for list of indexes
-	fmt.Printf("[")
-	for _, k := range mt.ProofArray() {
-		fmt.Printf("\"%s\", ", k.Hex())
+	sproof := share.ShareProof{
+		mt.AllDAGElements(),
+		mt.AllBranchesArray(),
 	}
-	fmt.Printf("]\n")
+	fmt.Printf("Element Array: %s\n", sproof.DAGElementArray())
+	fmt.Printf("Proof Array: %v\n", sproof.DAGProofArray())
 }
 
 func main() {
