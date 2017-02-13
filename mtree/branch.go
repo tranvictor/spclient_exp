@@ -1,22 +1,18 @@
 package mtree
 
-import (
-	"../common"
-)
-
 type BranchNode struct {
-	Hash             common.SPHash
+	Hash             NodeData
 	Left             *BranchNode
 	Right            *BranchNode
 	ElementOnTheLeft bool
 }
 
-func (b BranchNode) ToHashArray() []common.SPHash {
+func (b BranchNode) ToNodeArray() []NodeData {
 	if b.Left == nil && b.Right == nil {
-		return []common.SPHash{b.Hash}
+		return []NodeData{b.Hash}
 	}
-	left := b.Left.ToHashArray()
-	right := b.Right.ToHashArray()
+	left := b.Left.ToNodeArray()
+	right := b.Right.ToNodeArray()
 	if b.ElementOnTheLeft {
 		return append(left, right...)
 	} else {
@@ -25,18 +21,18 @@ func (b BranchNode) ToHashArray() []common.SPHash {
 }
 
 // explain the operation
-func AcceptLeftSibling(b *BranchNode, h common.SPHash) *BranchNode {
+func AcceptLeftSibling(b *BranchNode, h NodeData) *BranchNode {
 	return &BranchNode{
-		Hash:             common.SPHash{},
+		Hash:             nil,
 		Left:             &BranchNode{h, nil, nil, false},
 		Right:            b,
 		ElementOnTheLeft: false,
 	}
 }
 
-func AcceptRightSibling(b *BranchNode, h common.SPHash) *BranchNode {
+func AcceptRightSibling(b *BranchNode, h NodeData) *BranchNode {
 	return &BranchNode{
-		Hash:             common.SPHash{},
+		Hash:             nil,
 		Right:            &BranchNode{h, nil, nil, false},
 		Left:             b,
 		ElementOnTheLeft: true,

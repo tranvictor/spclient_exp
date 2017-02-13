@@ -1,6 +1,8 @@
 package mtree
 
-import "../common"
+import (
+	"../common"
+)
 
 func conventionalWord(data common.Word) ([]byte, []byte) {
 	first := rev(data[:32])
@@ -15,4 +17,13 @@ func rev(b []byte) []byte {
 		b[i], b[j] = b[j], b[i]
 	}
 	return b
+}
+
+func msbPadding(a []byte, size uint32) []byte {
+	result := make([]byte, len(a))
+	copy(result, a)
+	for i := uint32(len(a)); i < size; i++ {
+		result = append([]byte{0}, result...)
+	}
+	return result
 }

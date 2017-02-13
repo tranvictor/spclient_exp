@@ -1,13 +1,11 @@
 package mtree
 
-import "../common"
-
 type BranchTree struct {
-	RawData    common.Word
-	HashedData common.SPHash
+	RawData    ElementData
+	HashedData NodeData
 	Root       *BranchNode
 }
 
-func (t BranchTree) ToHashArray() []common.SPHash {
-	return t.Root.ToHashArray()
+func (t BranchTree) ToNodeArray() []NodeData {
+	return t.Root.ToNodeArray()
 }
