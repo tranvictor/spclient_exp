@@ -4,7 +4,9 @@ import "container/list"
 
 type ElementData interface{}
 
-type NodeData interface{}
+type NodeData interface {
+	Copy() NodeData
+}
 
 type node struct {
 	Data      NodeData
@@ -12,13 +14,19 @@ type node struct {
 	Branches  *map[uint32]BranchTree
 }
 
+func (n node) Copy() node {
+	return node{n.Data.Copy(), n.NodeCount, &map[uint32]BranchTree{}}
+}
+
 type hashFunc func(NodeData, NodeData) NodeData
 type elementHashFunc func(ElementData) NodeData
+type dummyNodeModifierFunc func(NodeData)
 
 type MerkleTree struct {
 	mtbuf          *list.List
 	h              hashFunc
 	eh             elementHashFunc
+	dnf            dummyNodeModifierFunc
 	finalized      bool
 	indexes        map[uint32]bool
 	orderedIndexes []uint32
@@ -101,8 +109,8 @@ func (mt *MerkleTree) insertNode(_node node) {
 func (mt *MerkleTree) Finalize() {
 	if !mt.finalized && mt.mtbuf.Len() > 1 {
 		for {
-			dupNode := mt.mtbuf.Back().Value.(node)
-			dupNode.Branches = &map[uint32]BranchTree{}
+			dupNode := mt.mtbuf.Back().Value.(node).Copy()
+			mt.dnf(dupNode.Data)
 			mt.insertNode(dupNode)
 			if mt.mtbuf.Len() == 1 {
 				break

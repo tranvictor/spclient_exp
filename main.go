@@ -71,26 +71,6 @@ func (b *testBlock) Nonce() uint64            { return b.nonce }
 func (b *testBlock) MixDigest() common.Hash   { return b.mixDigest }
 func (b *testBlock) NumberU64() uint64        { return b.number }
 
-func printShare(s share.Share) {
-	fmt.Printf("	ParentHash: %s\n", s.BlockHeader().ParentHash.Hex())
-	fmt.Printf("	UncleHash: %s\n", s.BlockHeader().UncleHash.Hex())
-	fmt.Printf("	Coinbase: %s\n", s.BlockHeader().Coinbase.Hex())
-	fmt.Printf("	Root: %s\n", s.BlockHeader().Root.Hex())
-	fmt.Printf("	TxHash: %s\n", s.BlockHeader().TxHash.Hex())
-	fmt.Printf("	ReceiptHash: %s\n", s.BlockHeader().ReceiptHash.Hex())
-	fmt.Printf("	Bloom: %s\n", s.BlockHeader().Bloom)
-	fmt.Printf("	Difficulty: 0x%s\n", s.BlockHeader().Difficulty.Text(16))
-	fmt.Printf("	Number: %s\n", s.BlockHeader().Number)
-	fmt.Printf("	GasLimit: 0x%s\n", s.BlockHeader().GasLimit.Text(16))
-	fmt.Printf("	GasUsed: 0x%s\n", s.BlockHeader().GasUsed.Text(16))
-	fmt.Printf("	Time: %v\n", s.BlockHeader().Time.Bytes())
-	fmt.Printf("	Nonce: %v\n", s.BlockHeader().Nonce[:])
-	fmt.Printf("	Extra: %v\n", s.BlockHeader().Extra)
-	fmt.Printf("	Counter: %v\n", s.Counter().Bytes())
-	fmt.Printf("	Corresponding Min-Max: 0x%s\n", s.Counter().Text(16))
-	fmt.Printf("	Corresponding Hash: %s\n", s.Hash().Hex())
-}
-
 func getShareFromBlock(client *rpc.Client, number int) *share.Share {
 	s := share.NewShare()
 	err := client.Call(s.BlockHeader(), "eth_getBlockByNumber", number, false)
@@ -111,11 +91,11 @@ func testAugMerkleTree() {
 		claim = append(claim[:], &s)
 	}
 	amt := mtree.NewAugTree()
-	amt.RegisterIndex(2)
+	amt.RegisterIndex(4)
 	sort.Sort(claim)
 	for i, s := range claim[:] {
 		fmt.Printf("Share index %d\n", i)
-		printShare(*s)
+		s.PrintInfo()
 		amt.Insert(*s, uint32(i))
 	}
 	amt.Finalize()
@@ -170,7 +150,7 @@ func testDatasetMerkleTree(datasetPath string, indices []uint32) {
 	processDuringRead(datasetPath, mt)
 	mt.Finalize()
 	result := mt.Root()
-	fmt.Printf("Merkle Root: %s\n", result.(spcommon.SPHash).Hex())
+	fmt.Printf("Merkle Root: %s\n", spcommon.SPHash(result.(mtree.DagData)).Hex())
 	sproof := share.ShareProof{
 		mt.AllDAGElements(),
 		mt.AllBranchesArray(),

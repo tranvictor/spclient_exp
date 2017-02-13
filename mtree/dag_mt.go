@@ -6,6 +6,14 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+type DagData common.SPHash
+
+func (dd DagData) Copy() NodeData {
+	result := DagData{}
+	copy(result[:], dd[:])
+	return result
+}
+
 type DagTree struct {
 	MerkleTree
 }
@@ -17,23 +25,25 @@ func _elementHash(data ElementData) NodeData {
 	// to be reversed each 32 bytes on leaf nodes
 	first, second := conventionalWord(data.(common.Word))
 	keccak := crypto.Keccak256(first, second)
-	result := common.SPHash{}
+	result := DagData{}
 	copy(result[:common.HashLength], keccak[common.HashLength:])
 	return result
 }
 
 func _hash(a, b NodeData) NodeData {
 	var keccak []byte
-	left := a.(common.SPHash)
-	right := b.(common.SPHash)
+	left := a.(DagData)
+	right := b.(DagData)
 	keccak = crypto.Keccak256(
 		append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, left[:]...),
 		append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, right[:]...),
 	)
-	result := common.SPHash{}
+	result := DagData{}
 	copy(result[:common.HashLength], keccak[common.HashLength:])
 	return result
 }
+
+func _modifier(data NodeData) {}
 
 func NewDagTree() *DagTree {
 	mtbuf := list.New()
@@ -42,6 +52,7 @@ func NewDagTree() *DagTree {
 			mtbuf,
 			_hash,
 			_elementHash,
+			_modifier,
 			false,
 			map[uint32]bool{},
 			[]uint32{},
@@ -70,13 +81,13 @@ func (dt DagTree) AllBranchesArray() []common.BranchElement {
 				if i*2+1 >= len(hashes) {
 					result = append(result,
 						common.BranchElementFromHash(
-							common.SPHash{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-							hashes[i*2].(common.SPHash)))
+							common.SPHash(DagData{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}),
+							common.SPHash(hashes[i*2].(DagData))))
 				} else {
 					result = append(result,
 						common.BranchElementFromHash(
-							hashes[i*2+1].(common.SPHash),
-							hashes[i*2].(common.SPHash)))
+							common.SPHash(hashes[i*2+1].(DagData)),
+							common.SPHash(hashes[i*2].(DagData))))
 				}
 			}
 		}
