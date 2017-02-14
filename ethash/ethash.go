@@ -303,6 +303,11 @@ func (d *dag) generate() {
 	})
 }
 
+func (d *dag) getFullSize() uint64 {
+	blockNum := C.uint64_t(d.epoch * epochLength)
+	return uint64(C.ethash_get_datasize(blockNum))
+}
+
 func freeDAG(d *dag) {
 	C.ethash_full_delete(d.ptr)
 	d.ptr = nil
@@ -331,6 +336,18 @@ func MakeDAG(blockNum uint64, dir string) error {
 		return errors.New("failed")
 	}
 	return nil
+}
+
+func MakeDAGWithSize(blockNum uint64, dir string) (uint64, error) {
+	d := &dag{epoch: blockNum / epochLength, dir: dir}
+	if blockNum >= epochLength*2048 {
+		return 0, fmt.Errorf("block number too high, limit is %d", epochLength*2048)
+	}
+	d.generate()
+	if d.ptr == nil {
+		return 0, errors.New("failed")
+	}
+	return d.getFullSize(), nil
 }
 
 // Full implements the Search half of the proof of work.

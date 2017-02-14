@@ -24,11 +24,20 @@ func BytesToBig(data []byte) *big.Int {
 	return n
 }
 
+func rev(b []byte) []byte {
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+	return b
+}
+
 func (w Word) ToUint256Array() []big.Int {
 	result := []big.Int{}
 	for i := 0; i < WordLength/32; i++ {
 		z := big.NewInt(0)
-		z.SetBytes(w[i*32 : (i+1)*32])
+		// reverse the bytes because contract expects
+		// big Int is construct in little endian
+		z.SetBytes(rev(w[i*32 : (i+1)*32]))
 		result = append(result, *z)
 	}
 	return result

@@ -2,8 +2,11 @@ package share
 
 import (
 	spcommon "../common"
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 	"math/big"
 )
 
@@ -29,6 +32,26 @@ func NewShare() *Share {
 
 func (s Share) BlockHeader() *types.Header {
 	return s.blockHeader
+}
+
+func (s Share) RlpHeaderWithoutNonce() ([]byte, error) {
+	buffer := new(bytes.Buffer)
+	err := rlp.Encode(buffer, []interface{}{
+		s.BlockHeader().ParentHash,
+		s.BlockHeader().UncleHash,
+		s.BlockHeader().Coinbase,
+		s.BlockHeader().Root,
+		s.BlockHeader().TxHash,
+		s.BlockHeader().ReceiptHash,
+		s.BlockHeader().Bloom,
+		s.BlockHeader().Difficulty,
+		s.BlockHeader().Number,
+		s.BlockHeader().GasLimit,
+		s.BlockHeader().GasUsed,
+		s.BlockHeader().Time,
+		s.BlockHeader().Extra,
+	})
+	return buffer.Bytes(), err
 }
 
 func (s Share) Timestamp() big.Int {
@@ -68,9 +91,11 @@ func (s Share) PrintInfo() {
 	fmt.Printf("	GasLimit: 0x%s\n", s.BlockHeader().GasLimit.Text(16))
 	fmt.Printf("	GasUsed: 0x%s\n", s.BlockHeader().GasUsed.Text(16))
 	fmt.Printf("	Time: %v\n", s.BlockHeader().Time.Bytes())
-	fmt.Printf("	Nonce: %v\n", s.BlockHeader().Nonce[:])
+	fmt.Printf("	Nonce: 0x%s\n", hex.EncodeToString(s.BlockHeader().Nonce[:]))
 	fmt.Printf("	Extra: %v\n", s.BlockHeader().Extra)
 	fmt.Printf("	Counter: %v\n", s.Counter().Bytes())
 	fmt.Printf("	Corresponding Min-Max: 0x%s\n", s.Counter().Text(16))
 	fmt.Printf("	Corresponding Hash: %s\n", s.Hash().Hex())
+	rlpEncoded, _ := s.RlpHeaderWithoutNonce()
+	fmt.Printf("	RlpEncode: 0x%s\n", hex.EncodeToString(rlpEncoded))
 }

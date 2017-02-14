@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rpc"
 	"io"
 	"log"
@@ -17,6 +18,25 @@ import (
 	"path/filepath"
 	"sort"
 )
+
+type InputForYaron struct {
+	NumShare             int
+	ShareIndex           int
+	RlpHeader            []byte
+	Difficulty           uint64
+	Epoch                uint64
+	Nonce                types.BlockNonce
+	AugMerkleRoot        spcommon.SPHash
+	MinCounter           *big.Int
+	MaxCounter           *big.Int
+	AugTreeCounterBranch []spcommon.BranchElement
+	AugTreeHashBranch    []spcommon.BranchElement
+	EthashCacheRoot      spcommon.SPHash
+	CacheElements        []big.Int
+	CacheBranch          []spcommon.BranchElement
+	CacheNumberOfElement uint64
+	BranchDepth          int
+}
 
 func processDuringRead(
 	datasetPath string, mt *mtree.DagTree) {
@@ -57,20 +77,6 @@ func processDuringRead(
 	}
 }
 
-type testBlock struct {
-	difficulty  *big.Int
-	hashNoNonce common.Hash
-	nonce       uint64
-	mixDigest   common.Hash
-	number      uint64
-}
-
-func (b *testBlock) Difficulty() *big.Int     { return b.difficulty }
-func (b *testBlock) HashNoNonce() common.Hash { return b.hashNoNonce }
-func (b *testBlock) Nonce() uint64            { return b.nonce }
-func (b *testBlock) MixDigest() common.Hash   { return b.mixDigest }
-func (b *testBlock) NumberU64() uint64        { return b.number }
-
 func getShareFromBlock(client *rpc.Client, number int) *share.Share {
 	s := share.NewShare()
 	err := client.Call(s.BlockHeader(), "eth_getBlockByNumber", number, false)
@@ -82,29 +88,47 @@ func getShareFromBlock(client *rpc.Client, number int) *share.Share {
 
 func testAugMerkleTree() {
 	claim := share.Claim{}
+	input := InputForYaron{}
 	client, err := rpc.Dial("http://127.0.0.1:8545")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	for i := 0; i < 5; i++ {
-		s := *getShareFromBlock(client, i+8891)
+	input.NumShare = 8
+	input.ShareIndex = 0
+	for i := 0; i < 8; i++ {
+		s := *getShareFromBlock(client, 1206-i)
 		claim = append(claim[:], &s)
 	}
 	amt := mtree.NewAugTree()
-	amt.RegisterIndex(4)
+	requestedIndex := uint32(input.ShareIndex)
+	amt.RegisterIndex(requestedIndex)
+	var requestedShare *share.Share
 	sort.Sort(claim)
 	for i, s := range claim[:] {
-		fmt.Printf("Share index %d\n", i)
-		s.PrintInfo()
+		if uint32(i) == requestedIndex {
+			fmt.Printf("Share index %d\n", i)
+			s.PrintInfo()
+			requestedShare = s
+			_rlpHeader, _ := s.RlpHeaderWithoutNonce()
+			input.RlpHeader = _rlpHeader
+			input.Nonce = s.BlockHeader().Nonce
+			input.Difficulty = s.BlockHeader().Difficulty.Uint64()
+			input.Epoch = s.BlockHeader().Number.Uint64() / 30000
+		}
 		amt.Insert(*s, uint32(i))
 	}
 	amt.Finalize()
 	root := amt.Root().(mtree.AugData)
+	input.AugMerkleRoot = root.Hash
+	input.MinCounter = root.Min.(*big.Int)
+	input.MaxCounter = root.Max.(*big.Int)
 	fmt.Printf("Root Hash: %s\n", root.Hash.Hex())
 	fmt.Printf("Root Min: 0x%s\n", root.Min.(*big.Int).Text(16))
 	fmt.Printf("Root Max: 0x%s\n", root.Max.(*big.Int).Text(16))
 	counterArray := amt.CounterBranchArray()
+	input.AugTreeCounterBranch = counterArray
 	hashArray := amt.HashBranchArray()
+	input.AugTreeHashBranch = hashArray
 	fmt.Printf("Counter Array: [")
 	for _, c := range counterArray {
 		fmt.Printf("%s, ", c.Hex())
@@ -115,23 +139,84 @@ func testAugMerkleTree() {
 		fmt.Printf("%s, ", h.Hex())
 	}
 	fmt.Printf("]\n")
+	testVerifyShare(requestedShare, &input)
+	fmt.Printf("// ==========================\n")
+	fmt.Printf("epoch_params = [%s, %d, %d, %d]\n",
+		input.EthashCacheRoot.Hex(),
+		input.CacheNumberOfElement,
+		input.BranchDepth,
+		input.Epoch,
+	)
+	fmt.Printf("submit_claim_params = [%d, %d, 0x%s, 0x%s, %s]\n",
+		input.NumShare,
+		input.Difficulty,
+		input.MinCounter.Text(16),
+		input.MaxCounter.Text(16),
+		input.AugMerkleRoot.Hex(),
+	)
+	fmt.Printf("cache_elements = [")
+	for _, bint := range input.CacheElements {
+		fmt.Printf("0x%s, ", bint.Text(16))
+	}
+	fmt.Printf("]\n")
+	fmt.Printf("cache_branch = [")
+	for _, e := range input.CacheBranch {
+		fmt.Printf("%s, ", e.Hex())
+	}
+	fmt.Printf("]\n")
+	fmt.Printf("aug_tree_counters_branch = [")
+	for _, c := range input.AugTreeCounterBranch {
+		fmt.Printf("%s, ", c.Hex())
+	}
+	fmt.Printf("]\n")
+	fmt.Printf("aug_tree_hashes_branch = [")
+	for _, h := range input.AugTreeHashBranch {
+		fmt.Printf("%s, ", h.Hex())
+	}
+	fmt.Printf("]\n")
+	fmt.Printf("rlp_header = [")
+	for _, b := range input.RlpHeader {
+		fmt.Printf("%d, ", b)
+	}
+	fmt.Printf("]\n")
+	fmt.Printf("verify_claim_params = [bytes(bytearray(rlp_header)), 0x%s, %d, cache_elements, cache_branch, aug_tree_counters_branch, aug_tree_hashes_branch]\n",
+		hex.EncodeToString(input.Nonce[:]),
+		input.ShareIndex,
+	)
+	fmt.Printf("// ==========================\n")
 }
 
-func testVerifyShare() {
+type testBlock struct {
+	difficulty  *big.Int
+	hashNoNonce common.Hash
+	nonce       types.BlockNonce
+	mixDigest   common.Hash
+	number      *big.Int
+}
+
+func (b *testBlock) Difficulty() *big.Int     { return b.difficulty }
+func (b *testBlock) HashNoNonce() common.Hash { return b.hashNoNonce }
+func (b *testBlock) Nonce() uint64            { return b.nonce.Uint64() }
+func (b *testBlock) MixDigest() common.Hash   { return b.mixDigest }
+func (b *testBlock) NumberU64() uint64        { return b.number.Uint64() }
+
+func testVerifyShare(s *share.Share, input *InputForYaron) {
 	block := &testBlock{
 		// number:      22,
-		number:      30000 * 11,
-		hashNoNonce: common.HexToHash("372eca2454ead349c3df0ab5d00b0b706b23e49d469387db91811cee0358fc6d"),
-		difficulty:  big.NewInt(132416),
-		nonce:       0x495732e0ed7a801c,
-		mixDigest:   common.HexToHash("2f74cdeb198af0b9abe65d22d372e22fb2d474371774a9583c1cc427a07939f6"),
+		number:      s.BlockHeader().Number,
+		hashNoNonce: s.BlockHeader().HashNoNonce(),
+		difficulty:  s.BlockHeader().Difficulty,
+		nonce:       s.BlockHeader().Nonce,
+		mixDigest:   s.BlockHeader().MixDigest,
 	}
 	eth := ethash.New()
 	indices := eth.GetVerificationIndices(block)
 	fmt.Printf("Indices: %v\n", indices)
 	// getting the dag path
+	fmt.Printf("Block number: %d\n", block.NumberU64())
 	fmt.Printf("Checking DAG file. Generate if needed...\n")
-	ethash.MakeDAG(block.NumberU64(), "")
+	fullSize, _ := ethash.MakeDAGWithSize(block.NumberU64(), "")
+	input.CacheNumberOfElement = fullSize / 128
 	seedHash, err := ethash.GetSeedHash(block.NumberU64())
 	if err != nil {
 		panic(err)
@@ -141,22 +226,34 @@ func testVerifyShare() {
 		fmt.Sprintf("full-R%s-%s", "23", hex.EncodeToString(seedHash[:8])),
 	)
 	fmt.Printf("Path: %s\n", path)
-	testDatasetMerkleTree(path, indices)
+	testDatasetMerkleTree(path, indices, input)
 }
 
-func testDatasetMerkleTree(datasetPath string, indices []uint32) {
+func testDatasetMerkleTree(datasetPath string, indices []uint32, input *InputForYaron) {
 	mt := mtree.NewDagTree()
 	mt.RegisterIndex(indices...)
 	processDuringRead(datasetPath, mt)
 	mt.Finalize()
 	result := mt.Root()
-	fmt.Printf("Merkle Root: %s\n", spcommon.SPHash(result.(mtree.DagData)).Hex())
+	input.EthashCacheRoot = spcommon.SPHash(result.(mtree.DagData))
+	fmt.Printf("Dag Merkle Root: %s\n", spcommon.SPHash(result.(mtree.DagData)).Hex())
 	sproof := share.ShareProof{
 		mt.AllDAGElements(),
 		mt.AllBranchesArray(),
 	}
-	fmt.Printf("Element Array: %s\n", sproof.DAGElementArray())
-	fmt.Printf("Proof Array: %v\n", sproof.DAGProofArray())
+	input.CacheElements = sproof.DAGElementArray()
+	input.CacheBranch = sproof.DAGProofArray()
+	input.BranchDepth = 23
+	fmt.Printf("Element Array: [")
+	for _, bint := range sproof.DAGElementArray() {
+		fmt.Printf("0x%s, ", bint.Text(16))
+	}
+	fmt.Printf("]\n")
+	fmt.Printf("Proof Array: [")
+	for _, e := range sproof.DAGProofArray() {
+		fmt.Printf("%s, ", e.Hex())
+	}
+	fmt.Printf("]\n")
 }
 
 func main() {
@@ -176,7 +273,8 @@ func main() {
 	// 	5626595, 5680798, 12309, 6314194, 11400756, 3646046,
 	// 	552207, 1118353, 12823889, 11905227, 7079429, 3667145,
 	// }
-	// testDatasetMerkleTree(datasetPath, indicesFromYaron)
+	// input := InputForYaron{}
+	// testDatasetMerkleTree(datasetPath, indicesFromYaron, &input)
 	// testVerifyShare()
 	testAugMerkleTree()
 }
