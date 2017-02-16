@@ -23,9 +23,9 @@ type Share struct {
 	difficulty  *big.Int
 }
 
-func NewShare() *Share {
+func NewShare(h *types.Header) *Share {
 	return &Share{
-		&types.Header{},
+		h,
 		big.NewInt(0),
 	}
 }

@@ -4,13 +4,13 @@ import (
 	spcommon "./common"
 	"./ethash"
 	"./mtree"
+	"./rpc"
 	"./share"
 	"bufio"
 	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rpc"
 	"io"
 	"log"
 	"math/big"
@@ -77,27 +77,14 @@ func processDuringRead(
 	}
 }
 
-func getShareFromBlock(client *rpc.Client, number int) *share.Share {
-	s := share.NewShare()
-	err := client.Call(s.BlockHeader(), "eth_getBlockByNumber", number, false)
-	if err != nil {
-		log.Fatal("Couldn't get latest block:", err)
-	}
-	return s
-}
-
 func testAugMerkleTree() {
 	claim := share.Claim{}
 	input := InputForYaron{}
-	client, err := rpc.Dial("http://127.0.0.1:8545")
-	if err != nil {
-		log.Fatal("dialing:", err)
-	}
 	input.NumShare = 8
 	input.ShareIndex = 0
 	for i := 0; i < 8; i++ {
-		s := *getShareFromBlock(client, 1206-i)
-		claim = append(claim[:], &s)
+		s := share.NewShare(rpc.Geth.GetBlockHeader(1206 - i))
+		claim = append(claim[:], s)
 	}
 	amt := mtree.NewAugTree()
 	requestedIndex := uint32(input.ShareIndex)
@@ -256,6 +243,16 @@ func testDatasetMerkleTree(datasetPath string, indices []uint32, input *InputFor
 	fmt.Printf("]\n")
 }
 
+func testGetWork() {
+	w := rpc.Geth.GetWork()
+	w.PrintInfo()
+}
+
+func testRPCServer() {
+	server := rpc.NewRPCServer()
+	server.Start()
+}
+
 func main() {
 	// compute merkle root of dataset
 	// datasetPath := "/Users/victor/.ethash/test"
@@ -276,5 +273,7 @@ func main() {
 	// input := InputForYaron{}
 	// testDatasetMerkleTree(datasetPath, indicesFromYaron, &input)
 	// testVerifyShare()
-	testAugMerkleTree()
+	// testAugMerkleTree()
+	// testGetWork()
+	testRPCServer()
 }
