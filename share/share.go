@@ -2,32 +2,35 @@ package share
 
 import (
 	spcommon "../common"
+	"../ethash"
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	"math/big"
 )
 
-type Claim []*Share
-
-func (c Claim) Len() int      { return len(c) }
-func (c Claim) Swap(i, j int) { c[i], c[j] = c[j], c[i] }
-func (c Claim) Less(i, j int) bool {
-	return c[i].Counter().Cmp(c[j].Counter()) == -1
-}
-
 type Share struct {
-	blockHeader *types.Header
-	difficulty  *big.Int
+	blockHeader     *types.Header
+	nonce           types.BlockNonce
+	mixDigest       common.Hash
+	ShareDifficulty *big.Int
+	SolutionState   int
 }
 
-func NewShare(h *types.Header) *Share {
-	return &Share{
-		h,
-		big.NewInt(0),
-	}
+func (s Share) Difficulty() *big.Int     { return s.blockHeader.Difficulty }
+func (s Share) HashNoNonce() common.Hash { return s.blockHeader.HashNoNonce() }
+func (s Share) Nonce() uint64            { return s.nonce.Uint64() }
+func (s Share) MixDigest() common.Hash   { return s.mixDigest }
+func (s Share) NumberU64() uint64        { return s.blockHeader.Number.Uint64() }
+
+func (s *Share) AcceptSolution(nonce types.BlockNonce, mixDigest common.Hash) {
+	s.nonce = nonce
+	s.mixDigest = mixDigest
+	eth := ethash.New()
+	s.SolutionState = eth.SolutionState(s, s.ShareDifficulty)
 }
 
 func (s Share) BlockHeader() *types.Header {
@@ -58,17 +61,13 @@ func (s Share) Timestamp() big.Int {
 	return *s.blockHeader.Time
 }
 
-func (s Share) Nonce() []byte {
-	return s.blockHeader.Nonce[:]
-}
-
 // We use concatenation of timestamp and nonce
 // as share counter
 // Nonce in ethereum is 8 bytes so counter = timestamp << 64 + nonce
 func (s Share) Counter() *big.Int {
 	t := s.Timestamp()
 	t.Lsh(&t, 64)
-	n := big.NewInt(0).SetBytes(s.Nonce())
+	n := big.NewInt(0).SetBytes(s.nonce[:])
 	return t.Add(&t, n)
 }
 
@@ -98,4 +97,14 @@ func (s Share) PrintInfo() {
 	fmt.Printf("	Corresponding Hash: %s\n", s.Hash().Hex())
 	rlpEncoded, _ := s.RlpHeaderWithoutNonce()
 	fmt.Printf("	RlpEncode: 0x%s\n", hex.EncodeToString(rlpEncoded))
+}
+
+func NewShare(h *types.Header, dif *big.Int) *Share {
+	return &Share{
+		h,
+		types.BlockNonce{},
+		common.Hash{},
+		dif,
+		0,
+	}
 }

@@ -152,6 +152,54 @@ func (l *Light) GetVerificationIndices(block pow.Block) []uint32 {
 	return result
 }
 
+func (l *Light) SolutionState(block pow.Block, shareDifficulty *big.Int) int {
+	// TODO: do ethash_quick_verify before getCache in order
+	// to prevent DOS attacks.
+	blockNum := block.NumberU64()
+	if blockNum >= epochLength*2048 {
+		glog.V(logger.Debug).Infof("block number %d too high, limit is %d", epochLength*2048)
+		return 0
+	}
+
+	difficulty := block.Difficulty()
+	/* Cannot happen if block header diff is validated prior to PoW, but can
+		 happen if PoW is checked first due to parallel PoW checking.
+		 We could check the minimum valid difficulty but for SoC we avoid (duplicating)
+	   Ethereum protocol consensus rules here which are not in scope of Ethash
+	*/
+	if difficulty.Cmp(common.Big0) == 0 || shareDifficulty.Cmp(common.Big0) == 0 {
+		glog.V(logger.Debug).Infof("invalid block difficulty or share difficulty")
+		return 0
+	}
+
+	cache := l.getCache(blockNum)
+	dagSize := C.ethash_get_datasize(C.uint64_t(blockNum))
+	if l.test {
+		dagSize = dagSizeForTesting
+	}
+	// Recompute the hash using the cache.
+	ok, mixDigest, result := cache.compute(uint64(dagSize), block.HashNoNonce(), block.Nonce())
+	if !ok {
+		return 0
+	}
+
+	// avoid mixdigest malleability as it's not included in a block's "hashNononce"
+	if block.MixDigest() != mixDigest {
+		return 0
+	}
+
+	// The actual check.
+	blockTarget := new(big.Int).Div(maxUint256, difficulty)
+	shareTarget := new(big.Int).Div(maxUint256, shareDifficulty)
+	if result.Big().Cmp(blockTarget) <= 0 {
+		return 2
+	}
+	if result.Big().Cmp(shareTarget) <= 0 {
+		return 1
+	}
+	return 0
+}
+
 // Verify checks whether the block's nonce is valid.
 func (l *Light) Verify(block pow.Block) bool {
 	// TODO: do ethash_quick_verify before getCache in order

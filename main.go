@@ -83,7 +83,8 @@ func testAugMerkleTree() {
 	input.NumShare = 8
 	input.ShareIndex = 0
 	for i := 0; i < 8; i++ {
-		s := share.NewShare(rpc.Geth.GetBlockHeader(1206 - i))
+		h := rpc.Geth.GetBlockHeader(1206 - i)
+		s := share.NewShare(h, h.Difficulty)
 		claim = append(claim[:], s)
 	}
 	amt := mtree.NewAugTree()

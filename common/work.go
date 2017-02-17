@@ -24,17 +24,12 @@ func (w Work) SeedHash() string {
 	return w.seedHash
 }
 
-func (w Work) Difficulty() *big.Int {
+func (w Work) ShareDifficulty() *big.Int {
 	return w.shareDifficulty
 }
 
 func (w Work) BlockHeader() *types.Header {
 	return w.blockHeader
-}
-
-// TODO: do ethash verification to check solution state
-func (w Work) SolutionState(nonce types.BlockNonce, mixDigest common.Hash) int {
-	return FullBlockSolution
 }
 
 func (w Work) PrintInfo() {
