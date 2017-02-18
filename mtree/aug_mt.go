@@ -4,8 +4,8 @@ import (
 	"../common"
 	"../share"
 	"container/list"
-	"encoding/hex"
-	"fmt"
+	// "encoding/hex"
+	// "fmt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"math/big"
 )
@@ -70,10 +70,10 @@ func _augModifier(data NodeData) {
 
 func _augElementHash(data ElementData) NodeData {
 	s := data.(share.Share)
-	fmt.Printf("Constructing node:\n")
-	fmt.Printf("	Min: %v\n", s.Counter())
-	fmt.Printf("	Max: %v\n", s.Counter())
-	fmt.Printf("	Hash: %s\n", s.Hash().Hex())
+	// fmt.Printf("Constructing node:\n")
+	// fmt.Printf("	Min: %v\n", s.Counter())
+	// fmt.Printf("	Max: %v\n", s.Counter())
+	// fmt.Printf("	Hash: %s\n", s.Hash().Hex())
 	return AugData{
 		Min:  s.Counter(),
 		Max:  s.Counter(),
@@ -92,22 +92,22 @@ func _augHash(a, b NodeData) NodeData {
 		append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, right.Hash[:]...),
 	)
 	copy(h[:common.HashLength], keccak[common.HashLength:])
-	fmt.Printf("Prepare to construct node: \n")
-	fmt.Printf("--> left_counter: 0x%s\n", hex.EncodeToString(left.CounterBytes()))
-	fmt.Printf("--> left_hash: 0x%s\n", hex.EncodeToString(append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, left.Hash[:]...)))
-	fmt.Printf("--> right_counter: 0x%s\n", hex.EncodeToString(right.CounterBytes()))
-	fmt.Printf("--> right_hash: 0x%s\n", hex.EncodeToString(append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, right.Hash[:]...)))
-	fmt.Printf("Constructing node:\n")
-	fmt.Printf("	Left: %s\n", left.Hash.Hex())
-	fmt.Printf("	Left Min: 0x%s\n", left.Min.(*big.Int).Text(16))
-	fmt.Printf("	Left Max: 0x%s\n", left.Max.(*big.Int).Text(16))
-	fmt.Printf("	Right: %s\n", right.Hash.Hex())
-	fmt.Printf("	Right Min: 0x%s\n", right.Min.(*big.Int).Text(16))
-	fmt.Printf("	Right Max: 0x%s\n", right.Max.(*big.Int).Text(16))
-	fmt.Printf("	Min: 0x%v\n", _min(left.Min, right.Min).(*big.Int).Text(16))
-	fmt.Printf("	Max: 0x%v\n", _max(left.Max, right.Max).(*big.Int).Text(16))
-	fmt.Printf("	Hash: %s\n", h.Hex())
-	fmt.Printf("	Keccak: 0x%s\n", hex.EncodeToString(keccak))
+	// fmt.Printf("Prepare to construct node: \n")
+	// fmt.Printf("--> left_counter: 0x%s\n", hex.EncodeToString(left.CounterBytes()))
+	// fmt.Printf("--> left_hash: 0x%s\n", hex.EncodeToString(append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, left.Hash[:]...)))
+	// fmt.Printf("--> right_counter: 0x%s\n", hex.EncodeToString(right.CounterBytes()))
+	// fmt.Printf("--> right_hash: 0x%s\n", hex.EncodeToString(append([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, right.Hash[:]...)))
+	// fmt.Printf("Constructing node:\n")
+	// fmt.Printf("	Left: %s\n", left.Hash.Hex())
+	// fmt.Printf("	Left Min: 0x%s\n", left.Min.(*big.Int).Text(16))
+	// fmt.Printf("	Left Max: 0x%s\n", left.Max.(*big.Int).Text(16))
+	// fmt.Printf("	Right: %s\n", right.Hash.Hex())
+	// fmt.Printf("	Right Min: 0x%s\n", right.Min.(*big.Int).Text(16))
+	// fmt.Printf("	Right Max: 0x%s\n", right.Max.(*big.Int).Text(16))
+	// fmt.Printf("	Min: 0x%v\n", _min(left.Min, right.Min).(*big.Int).Text(16))
+	// fmt.Printf("	Max: 0x%v\n", _max(left.Max, right.Max).(*big.Int).Text(16))
+	// fmt.Printf("	Hash: %s\n", h.Hex())
+	// fmt.Printf("	Keccak: 0x%s\n", hex.EncodeToString(keccak))
 	return AugData{
 		Min:  _min(left.Min, right.Min),
 		Max:  _max(left.Max, right.Max),
@@ -128,6 +128,18 @@ func NewAugTree() *AugTree {
 			[]uint32{},
 		},
 	}
+}
+
+func (amt AugTree) RootHash() common.SPHash {
+	return amt.Root().(AugData).Hash
+}
+
+func (amt AugTree) RootMin() *big.Int {
+	return amt.Root().(AugData).Min.(*big.Int)
+}
+
+func (amt AugTree) RootMax() *big.Int {
+	return amt.Root().(AugData).Max.(*big.Int)
 }
 
 func (amt AugTree) CounterBranchArray() []common.BranchElement {

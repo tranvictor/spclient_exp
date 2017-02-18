@@ -37,11 +37,11 @@ var ContractAddress = "0xa1a2a3a4a34598abcdeffed45902390854389043"
 var ExtraData = "somethingextra"
 var ShareDif = "0x186a0"
 
-type geth struct {
+type GethClient struct {
 	client *rpc.Client
 }
 
-func (g geth) GetPendingBlockHeader() *types.Header {
+func (g GethClient) GetPendingBlockHeader() *types.Header {
 	header := jsonHeader{}
 	err := g.client.Call(&header, "eth_getBlockByNumber", "pending", false)
 	if err != nil {
@@ -72,7 +72,7 @@ func (g geth) GetPendingBlockHeader() *types.Header {
 	return &result
 }
 
-func (g geth) GetBlockHeader(number int) *types.Header {
+func (g GethClient) GetBlockHeader(number int) *types.Header {
 	header := types.Header{}
 	err := g.client.Call(&header, "eth_getBlockByNumber", number, false)
 	if err != nil {
@@ -86,7 +86,7 @@ type gethWork [3]string
 
 func (w gethWork) PoWHash() string { return w[0] }
 
-func (g geth) GetWork() *spcommon.Work {
+func (g GethClient) GetWork() *spcommon.Work {
 	w := gethWork{}
 	var h *types.Header
 	for {
@@ -103,22 +103,22 @@ func (g geth) GetWork() *spcommon.Work {
 	return spcommon.NewWork(h, w[0], w[1])
 }
 
-func (g geth) SubmitHashrate(hashrate hexutil.Uint64, id common.Hash) bool {
+func (g GethClient) SubmitHashrate(hashrate hexutil.Uint64, id common.Hash) bool {
 	var result bool
 	g.client.Call(&result, "eth_submitHashrate", hashrate, id)
 	return result
 }
 
-func (g geth) SubmitWork(nonce types.BlockNonce, hash, mixDigest common.Hash) bool {
+func (g GethClient) SubmitWork(nonce types.BlockNonce, hash, mixDigest common.Hash) bool {
 	var result bool
 	g.client.Call(&result, "eth_submitWork", nonce, hash, mixDigest)
 	return result
 }
 
-func NewGethRPCClient() *geth {
+func NewGethRPCClient() *GethClient {
 	client, err := rpc.Dial("http://127.0.0.1:8545")
 	if err != nil {
 		panic(err)
 	}
-	return &geth{client}
+	return &GethClient{client}
 }

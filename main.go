@@ -1,7 +1,9 @@
 package main
 
 import (
+	"./claim"
 	spcommon "./common"
+	"./contract"
 	"./ethash"
 	"./mtree"
 	"./rpc"
@@ -16,7 +18,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"sort"
+	// "sort"
 )
 
 type InputForYaron struct {
@@ -77,102 +79,102 @@ func processDuringRead(
 	}
 }
 
-func testAugMerkleTree() {
-	claim := share.Claim{}
-	input := InputForYaron{}
-	input.NumShare = 8
-	input.ShareIndex = 0
-	for i := 0; i < 8; i++ {
-		h := rpc.Geth.GetBlockHeader(1206 - i)
-		s := share.NewShare(h, h.Difficulty)
-		claim = append(claim[:], s)
-	}
-	amt := mtree.NewAugTree()
-	requestedIndex := uint32(input.ShareIndex)
-	amt.RegisterIndex(requestedIndex)
-	var requestedShare *share.Share
-	sort.Sort(claim)
-	for i, s := range claim[:] {
-		if uint32(i) == requestedIndex {
-			fmt.Printf("Share index %d\n", i)
-			s.PrintInfo()
-			requestedShare = s
-			_rlpHeader, _ := s.RlpHeaderWithoutNonce()
-			input.RlpHeader = _rlpHeader
-			input.Nonce = s.BlockHeader().Nonce
-			input.Difficulty = s.BlockHeader().Difficulty.Uint64()
-			input.Epoch = s.BlockHeader().Number.Uint64() / 30000
-		}
-		amt.Insert(*s, uint32(i))
-	}
-	amt.Finalize()
-	root := amt.Root().(mtree.AugData)
-	input.AugMerkleRoot = root.Hash
-	input.MinCounter = root.Min.(*big.Int)
-	input.MaxCounter = root.Max.(*big.Int)
-	fmt.Printf("Root Hash: %s\n", root.Hash.Hex())
-	fmt.Printf("Root Min: 0x%s\n", root.Min.(*big.Int).Text(16))
-	fmt.Printf("Root Max: 0x%s\n", root.Max.(*big.Int).Text(16))
-	counterArray := amt.CounterBranchArray()
-	input.AugTreeCounterBranch = counterArray
-	hashArray := amt.HashBranchArray()
-	input.AugTreeHashBranch = hashArray
-	fmt.Printf("Counter Array: [")
-	for _, c := range counterArray {
-		fmt.Printf("%s, ", c.Hex())
-	}
-	fmt.Printf("]\n")
-	fmt.Printf("Hash Array: [")
-	for _, h := range hashArray {
-		fmt.Printf("%s, ", h.Hex())
-	}
-	fmt.Printf("]\n")
-	testVerifyShare(requestedShare, &input)
-	fmt.Printf("// ==========================\n")
-	fmt.Printf("epoch_params = [%s, %d, %d, %d]\n",
-		input.EthashCacheRoot.Hex(),
-		input.CacheNumberOfElement,
-		input.BranchDepth,
-		input.Epoch,
-	)
-	fmt.Printf("submit_claim_params = [%d, %d, 0x%s, 0x%s, %s]\n",
-		input.NumShare,
-		input.Difficulty,
-		input.MinCounter.Text(16),
-		input.MaxCounter.Text(16),
-		input.AugMerkleRoot.Hex(),
-	)
-	fmt.Printf("cache_elements = [")
-	for _, bint := range input.CacheElements {
-		fmt.Printf("0x%s, ", bint.Text(16))
-	}
-	fmt.Printf("]\n")
-	fmt.Printf("cache_branch = [")
-	for _, e := range input.CacheBranch {
-		fmt.Printf("%s, ", e.Hex())
-	}
-	fmt.Printf("]\n")
-	fmt.Printf("aug_tree_counters_branch = [")
-	for _, c := range input.AugTreeCounterBranch {
-		fmt.Printf("%s, ", c.Hex())
-	}
-	fmt.Printf("]\n")
-	fmt.Printf("aug_tree_hashes_branch = [")
-	for _, h := range input.AugTreeHashBranch {
-		fmt.Printf("%s, ", h.Hex())
-	}
-	fmt.Printf("]\n")
-	fmt.Printf("rlp_header = [")
-	for _, b := range input.RlpHeader {
-		fmt.Printf("%d, ", b)
-	}
-	fmt.Printf("]\n")
-	fmt.Printf("verify_claim_params = [bytes(bytearray(rlp_header)), 0x%s, %d, cache_elements, cache_branch, aug_tree_counters_branch, aug_tree_hashes_branch]\n",
-		hex.EncodeToString(input.Nonce[:]),
-		input.ShareIndex,
-	)
-	fmt.Printf("// ==========================\n")
-}
+// func testAugMerkleTree() {
+// 	claim := share.Claim{}
+// 	input := InputForYaron{}
+// 	input.NumShare = 8
+// 	input.ShareIndex = 0
+// 	for i := 0; i < 8; i++ {
+// 		h := rpc.Geth.GetBlockHeader(1206 - i)
+// 		s := share.NewShare(h, h.Difficulty)
+// 		claim = append(claim[:], s)
+// 	}
+// 	amt := mtree.NewAugTree()
+// 	requestedIndex := uint32(input.ShareIndex)
+// 	amt.RegisterIndex(requestedIndex)
+// 	var requestedShare *share.Share
+// 	sort.Sort(claim)
+// 	for i, s := range claim[:] {
+// 		if uint32(i) == requestedIndex {
+// 			fmt.Printf("Share index %d\n", i)
+// 			s.PrintInfo()
+// 			requestedShare = s
+// 			_rlpHeader, _ := s.RlpHeaderWithoutNonce()
+// 			input.RlpHeader = _rlpHeader
+// 			input.Nonce = s.BlockHeader().Nonce
+// 			input.Difficulty = s.BlockHeader().Difficulty.Uint64()
+// 			input.Epoch = s.BlockHeader().Number.Uint64() / 30000
+// 		}
+// 		amt.Insert(*s, uint32(i))
+// 	}
+// 	amt.Finalize()
+// 	root := amt.Root().(mtree.AugData)
+// 	input.AugMerkleRoot = root.Hash
+// 	input.MinCounter = root.Min.(*big.Int)
+// 	input.MaxCounter = root.Max.(*big.Int)
+// 	fmt.Printf("Root Hash: %s\n", root.Hash.Hex())
+// 	fmt.Printf("Root Min: 0x%s\n", root.Min.(*big.Int).Text(16))
+// 	fmt.Printf("Root Max: 0x%s\n", root.Max.(*big.Int).Text(16))
+// 	counterArray := amt.CounterBranchArray()
+// 	input.AugTreeCounterBranch = counterArray
+// 	hashArray := amt.HashBranchArray()
+// 	input.AugTreeHashBranch = hashArray
+// 	fmt.Printf("Counter Array: [")
+// 	for _, c := range counterArray {
+// 		fmt.Printf("%s, ", c.Hex())
+// 	}
+// 	fmt.Printf("]\n")
+// 	fmt.Printf("Hash Array: [")
+// 	for _, h := range hashArray {
+// 		fmt.Printf("%s, ", h.Hex())
+// 	}
+// 	fmt.Printf("]\n")
+// 	testVerifyShare(requestedShare, &input)
+// 	fmt.Printf("// ==========================\n")
+// 	fmt.Printf("epoch_params = [%s, %d, %d, %d]\n",
+// 		input.EthashCacheRoot.Hex(),
+// 		input.CacheNumberOfElement,
+// 		input.BranchDepth,
+// 		input.Epoch,
+// 	)
+// 	fmt.Printf("submit_claim_params = [%d, %d, 0x%s, 0x%s, %s]\n",
+// 		input.NumShare,
+// 		input.Difficulty,
+// 		input.MinCounter.Text(16),
+// 		input.MaxCounter.Text(16),
+// 		input.AugMerkleRoot.Hex(),
+// 	)
+// 	fmt.Printf("cache_elements = [")
+// 	for _, bint := range input.CacheElements {
+// 		fmt.Printf("0x%s, ", bint.Text(16))
+// 	}
+// 	fmt.Printf("]\n")
+// 	fmt.Printf("cache_branch = [")
+// 	for _, e := range input.CacheBranch {
+// 		fmt.Printf("%s, ", e.Hex())
+// 	}
+// 	fmt.Printf("]\n")
+// 	fmt.Printf("aug_tree_counters_branch = [")
+// 	for _, c := range input.AugTreeCounterBranch {
+// 		fmt.Printf("%s, ", c.Hex())
+// 	}
+// 	fmt.Printf("]\n")
+// 	fmt.Printf("aug_tree_hashes_branch = [")
+// 	for _, h := range input.AugTreeHashBranch {
+// 		fmt.Printf("%s, ", h.Hex())
+// 	}
+// 	fmt.Printf("]\n")
+// 	fmt.Printf("rlp_header = [")
+// 	for _, b := range input.RlpHeader {
+// 		fmt.Printf("%d, ", b)
+// 	}
+// 	fmt.Printf("]\n")
+// 	fmt.Printf("verify_claim_params = [bytes(bytearray(rlp_header)), 0x%s, %d, cache_elements, cache_branch, aug_tree_counters_branch, aug_tree_hashes_branch]\n",
+// 		hex.EncodeToString(input.Nonce[:]),
+// 		input.ShareIndex,
+// 	)
+// 	fmt.Printf("// ==========================\n")
+// }
 
 type testBlock struct {
 	difficulty  *big.Int
@@ -254,6 +256,13 @@ func testRPCServer() {
 	server.Start()
 }
 
+func testInteractWithContract() {
+	contractClient := contract.NewContractClient()
+	claim.LoadClaimRepo(contractClient)
+	server := rpc.NewRPCServer()
+	server.Start()
+}
+
 func main() {
 	// compute merkle root of dataset
 	// datasetPath := "/Users/victor/.ethash/test"
@@ -276,5 +285,6 @@ func main() {
 	// testVerifyShare()
 	// testAugMerkleTree()
 	// testGetWork()
-	testRPCServer()
+	// testRPCServer()
+	testInteractWithContract()
 }

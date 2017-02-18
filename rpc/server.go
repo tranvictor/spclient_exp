@@ -7,22 +7,22 @@ import (
 
 var RPCServer = NewRPCServer()
 
-type server struct {
+type Server struct {
 	Port      uint16
 	rpcServer *rpc.Server
 	server    *http.Server
 }
 
-func NewRPCServer() *server {
+func NewRPCServer() *Server {
 	rpcServer := rpc.NewServer()
 	service := SmartPoolService{}
 	rpcServer.RegisterName("eth", service)
-	return &server{uint16(1633), rpcServer, &http.Server{
+	return &Server{uint16(1633), rpcServer, &http.Server{
 		Addr:    ":1633",
 		Handler: rpcServer,
 	}}
 }
 
-func (s server) Start() {
+func (s Server) Start() {
 	s.server.ListenAndServe()
 }

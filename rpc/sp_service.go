@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"../claim"
 	spcommon "../common"
 	"../share"
 	"fmt"
@@ -38,18 +39,20 @@ func (SmartPoolService) SubmitWork(nonce types.BlockNonce, hash, mixDigest commo
 		fmt.Printf("Work was submitted for %x but no pending work found\n", hash)
 		return false
 	}
-	fmt.Printf("Work submitted with: nonce(%v) mixDigest(%v) hash(%s)\n", nonce, mixDigest, hash.Hex())
+	// fmt.Printf("Work submitted with: nonce(%v) mixDigest(%v) hash(%s)\n", nonce, mixDigest, hash.Hex())
+	fmt.Printf(".")
 	s := share.NewShare(work.BlockHeader(), work.ShareDifficulty())
 	s.AcceptSolution(nonce, mixDigest)
 	if s.SolutionState == spcommon.FullBlockSolution {
 		if Geth.SubmitWork(nonce, hash, mixDigest) {
+			fmt.Printf("\n==========YAY found a full solution==========\n")
 			delete(spcommon.WorkPool, hash)
 			return true
 		} else {
 			return false
 		}
 	} else if s.SolutionState == spcommon.ValidShare {
-		share.ClaimRepo.AddShare(s)
+		claim.Repo.AddShare(s)
 		return true
 	} else {
 		return false
