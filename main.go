@@ -31,11 +31,11 @@ type InputForYaron struct {
 	AugMerkleRoot        spcommon.SPHash
 	MinCounter           *big.Int
 	MaxCounter           *big.Int
-	AugTreeCounterBranch []spcommon.BranchElement
-	AugTreeHashBranch    []spcommon.BranchElement
+	AugTreeCounterBranch []*big.Int
+	AugTreeHashBranch    []*big.Int
 	EthashCacheRoot      spcommon.SPHash
-	CacheElements        []big.Int
-	CacheBranch          []spcommon.BranchElement
+	CacheElements        []*big.Int
+	CacheBranch          []*big.Int
 	CacheNumberOfElement uint64
 	BranchDepth          int
 }
@@ -241,7 +241,7 @@ func testDatasetMerkleTree(datasetPath string, indices []uint32, input *InputFor
 	fmt.Printf("]\n")
 	fmt.Printf("Proof Array: [")
 	for _, e := range sproof.DAGProofArray() {
-		fmt.Printf("%s, ", e.Hex())
+		fmt.Printf("0x%s, ", e.Text(16))
 	}
 	fmt.Printf("]\n")
 }

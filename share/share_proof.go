@@ -10,12 +10,16 @@ type ShareProof struct {
 	DAGProof    []spcommon.BranchElement
 }
 
-func (p ShareProof) DAGProofArray() []spcommon.BranchElement {
-	return p.DAGProof
+func (p ShareProof) DAGProofArray() []*big.Int {
+	result := []*big.Int{}
+	for _, be := range p.DAGProof {
+		result = append(result, be.Big())
+	}
+	return result
 }
 
-func (p ShareProof) DAGElementArray() []big.Int {
-	result := []big.Int{}
+func (p ShareProof) DAGElementArray() []*big.Int {
+	result := []*big.Int{}
 	for _, w := range p.DAGElements {
 		result = append(result, w.ToUint256Array()...)
 	}

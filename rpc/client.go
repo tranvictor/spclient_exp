@@ -33,8 +33,8 @@ type jsonHeader struct {
 var Geth = NewGethRPCClient()
 
 // var ContractAddress = "0xe034afdcc2ba0441ff215ee9ba0da3e86450108d"
-var ContractAddress = "0xa1a2a3a4a34598abcdeffed45902390854389043"
-var ExtraData = "somethingextra"
+var ContractAddress = "0x1149eD647cae5B4C3f4A2dca4F68c83683e33e14"
+var ExtraData = "smartpool-aZ09v-186a0"
 var ShareDif = "0x186a0"
 
 type GethClient struct {

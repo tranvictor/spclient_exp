@@ -25,6 +25,11 @@ func (s Share) HashNoNonce() common.Hash { return s.blockHeader.HashNoNonce() }
 func (s Share) Nonce() uint64            { return s.nonce.Uint64() }
 func (s Share) MixDigest() common.Hash   { return s.mixDigest }
 func (s Share) NumberU64() uint64        { return s.blockHeader.Number.Uint64() }
+func (s Share) NonceBig() *big.Int {
+	n := new(big.Int)
+	n.SetBytes(s.nonce[:])
+	return n
+}
 
 func (s *Share) AcceptSolution(nonce types.BlockNonce, mixDigest common.Hash) {
 	s.nonce = nonce

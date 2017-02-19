@@ -142,9 +142,9 @@ func (amt AugTree) RootMax() *big.Int {
 	return amt.Root().(AugData).Max.(*big.Int)
 }
 
-func (amt AugTree) CounterBranchArray() []common.BranchElement {
+func (amt AugTree) CounterBranchArray() []*big.Int {
 	if amt.finalized {
-		result := []common.BranchElement{}
+		result := []*big.Int{}
 		branches := amt.Branches()
 		var node AugData
 		for _, k := range amt.Indices() {
@@ -157,7 +157,7 @@ func (amt AugTree) CounterBranchArray() []common.BranchElement {
 				// fmt.Printf("node %v\n", node)
 				be := common.BranchElement{}
 				copy(be[:], node.CounterBytes())
-				result = append(result, be)
+				result = append(result, be.Big())
 			}
 		}
 		return result
@@ -165,9 +165,9 @@ func (amt AugTree) CounterBranchArray() []common.BranchElement {
 	panic("SP Merkle tree needs to be finalized by calling mt.Finalize()")
 }
 
-func (amt AugTree) HashBranchArray() []common.BranchElement {
+func (amt AugTree) HashBranchArray() []*big.Int {
 	if amt.finalized {
-		result := []common.BranchElement{}
+		result := []*big.Int{}
 		branches := amt.Branches()
 		var node AugData
 		for _, k := range amt.Indices() {
@@ -179,7 +179,7 @@ func (amt AugTree) HashBranchArray() []common.BranchElement {
 				node = n.(AugData)
 				be := common.BranchElement{}
 				copy(be[:], msbPadding(node.Hash[:], 32))
-				result = append(result, be)
+				result = append(result, be.Big())
 			}
 		}
 		return result

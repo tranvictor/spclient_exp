@@ -31,14 +31,14 @@ func rev(b []byte) []byte {
 	return b
 }
 
-func (w Word) ToUint256Array() []big.Int {
-	result := []big.Int{}
+func (w Word) ToUint256Array() []*big.Int {
+	result := []*big.Int{}
 	for i := 0; i < WordLength/32; i++ {
 		z := big.NewInt(0)
 		// reverse the bytes because contract expects
 		// big Int is construct in little endian
 		z.SetBytes(rev(w[i*32 : (i+1)*32]))
-		result = append(result, *z)
+		result = append(result, z)
 	}
 	return result
 }

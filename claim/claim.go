@@ -1,12 +1,20 @@
 package claim
 
 import (
+	"../common"
 	"../contract"
+	"../ethash"
 	"../mtree"
 	"../share"
+	"bufio"
+	"encoding/hex"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
+	"io"
+	"log"
 	"math/big"
+	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -31,6 +39,92 @@ func (c Claim) MinDifficulty() *big.Int {
 	return m
 }
 
+func processDuringRead(
+	datasetPath string, mt *mtree.DagTree) {
+
+	f, err := os.Open(datasetPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	r := bufio.NewReader(f)
+	buf := [128]byte{}
+	// ignore first 8 bytes magic number at the beginning
+	// of dataset. See more at https://github.com/ethereum/wiki/wiki/Ethash-DAG-Disk-Storage-Format
+	_, err = io.ReadFull(r, buf[:8])
+	if err != nil {
+		log.Fatal(err)
+	}
+	var i uint32 = 0
+	for {
+		n, err := io.ReadFull(r, buf[:128])
+		if n == 0 {
+			if err == nil {
+				continue
+			}
+			if err == io.EOF {
+				break
+			}
+			log.Fatal(err)
+		}
+		if n != 128 {
+			fmt.Println(n)
+			log.Fatal("Malformed dataset")
+		}
+		mt.Insert(common.Word(buf), i)
+		if err != nil && err != io.EOF {
+			log.Fatal(err)
+		}
+		i++
+	}
+}
+
+// TODO: should break this function into smaller meaningful ones
+func (c *Claim) SubmitProof(_client *contract.ContractClient, index int) (*types.Transaction, error) {
+	sort.Sort(c)
+	amt := mtree.NewAugTree()
+	amt.RegisterIndex(uint32(index))
+	for i, s := range *c {
+		amt.Insert(*s, uint32(i))
+	}
+	amt.Finalize()
+	requestedShare := (*c)[index]
+	rlpHeader, _ := requestedShare.RlpHeaderWithoutNonce()
+	nonce := requestedShare.NonceBig()
+	shareIndex := big.NewInt(int64(index))
+	augCountersBranch := amt.CounterBranchArray()
+	augHashesBranch := amt.HashBranchArray()
+
+	eth := ethash.New()
+	indices := eth.GetVerificationIndices(requestedShare)
+	seedHash, err := ethash.GetSeedHash(requestedShare.NumberU64())
+	if err != nil {
+		panic(err)
+	}
+	path := filepath.Join(
+		ethash.DefaultDir,
+		fmt.Sprintf("full-R%s-%s", "23", hex.EncodeToString(seedHash[:8])),
+	)
+	mt := mtree.NewDagTree()
+	mt.RegisterIndex(indices...)
+	processDuringRead(path, mt)
+	mt.Finalize()
+	sproof := share.ShareProof{
+		mt.AllDAGElements(),
+		mt.AllBranchesArray(),
+	}
+	dataSetLookup := sproof.DAGElementArray()
+	witnessForLookup := sproof.DAGProofArray()
+	return _client.VerifyClaim(
+		rlpHeader,
+		nonce,
+		shareIndex,
+		dataSetLookup,
+		witnessForLookup,
+		augCountersBranch,
+		augHashesBranch,
+	)
+}
+
 func (c *Claim) SubmitToContract(_client *contract.ContractClient) (*types.Transaction, error) {
 	sort.Sort(c)
 	amt := mtree.NewAugTree()
@@ -50,8 +144,8 @@ func (c *Claim) SubmitToContract(_client *contract.ContractClient) (*types.Trans
 var Repo *ClaimRepo
 
 type ClaimRepo struct {
-	claims         []Claim
-	cIndex         uint64
+	claims         map[int]Claim
+	cClaimNumber   uint64
 	shareThreshold uint64
 	contract       *contract.ContractClient
 }
@@ -66,23 +160,57 @@ func (cr *ClaimRepo) AddShare(s *share.Share) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("  Start new claim\n")
+		fmt.Printf("  Starting new claim\n")
+		fmt.Printf("  Getting claim number: ")
+		cr.cClaimNumber = cr.NextClaimNumber()
+		cr.claims[int(cr.cClaimNumber)] = Claim{}
+		tx, err = cr.VerifyClaim()
+		if err != nil {
+			panic(err)
+		}
+		if tx != nil {
+			fmt.Printf("  Verification submitted by pending tx: 0x%x\n", tx.Hash())
+		}
 		fmt.Printf("================\n")
-		cr.cIndex++
-		cr.claims = append(cr.claims, Claim{})
 	}
-	cr.claims[cr.cIndex] = append(cr.claims[cr.cIndex][:], s)
+	cr.claims[int(cr.cClaimNumber)] = append(cr.claims[int(cr.cClaimNumber)][:], s)
+}
+
+func (cr ClaimRepo) GetClaim(number int) Claim {
+	return cr.claims[number]
+}
+
+func (cr ClaimRepo) getClaimToVerify() Claim {
+	// TODO: get the oldest unverified claim
+	// right now, we just get the claim that has
+	// claim number of current number - 3
+	return cr.GetClaim(int(cr.cClaimNumber) - 3)
+}
+
+func (cr ClaimRepo) VerifyClaim() (*types.Transaction, error) {
+	// TODO: Get seed from contract
+	index := 0
+	claim := cr.getClaimToVerify()
+	if claim != nil {
+		return claim.SubmitProof(cr.contract, index)
+	} else {
+		return nil, nil
+	}
+}
+
+func (cr ClaimRepo) NextClaimNumber() uint64 {
+	return cr.cClaimNumber + 1
 }
 
 func (cr ClaimRepo) CurrentClaim() Claim {
-	return cr.claims[cr.cIndex]
+	return cr.claims[int(cr.cClaimNumber)]
 }
 
 func LoadClaimRepo(cc *contract.ContractClient) *ClaimRepo {
 	// TODO: load from persistent storage
 	// TODO: this is currently not safe for multiple go routines
 	if Repo == nil {
-		Repo = &ClaimRepo{[]Claim{Claim{}}, 0, 16, cc}
+		Repo = &ClaimRepo{map[int]Claim{0: Claim{}}, 0, 16, cc}
 	}
 	return Repo
 }
