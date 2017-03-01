@@ -43,6 +43,51 @@ func (w Word) ToUint256Array() []*big.Int {
 	return result
 }
 
+func base62DigitsToString(digits []byte) string {
+	for i := 0; i < len(digits); i++ {
+		if 0 <= digits[i] && digits[i] <= 9 {
+			digits[i] += 48
+		} else {
+			if 10 <= digits[i] && digits[i] <= 9+26 {
+				digits[i] += 97 - 10
+			} else {
+				if 9+26+1 <= digits[i] && digits[i] <= 9+26+26 {
+					digits[i] += 65 - 36
+				}
+			}
+		}
+	}
+	return string(digits)
+}
+
+// return 11 chars base 62 representation of a big int
+// base chars are 0-9 a-z A-Z
+func BigToBase62(num *big.Int) string {
+	digits := []byte{}
+	n := big.NewInt(0)
+	n.Add(n, num)
+	zero := big.NewInt(0)
+	base := big.NewInt(62)
+	for {
+		mod := big.NewInt(0)
+		n, mod = n.DivMod(n, base, mod)
+		mBytes := mod.Bytes()
+		if len(mBytes) == 0 {
+			digits = append(digits, 0)
+		} else {
+			digits = append(digits, mod.Bytes()[0])
+		}
+		if n.Cmp(zero) == 0 {
+			break
+		}
+	}
+	l := len(digits)
+	for i := 0; i < 11-l; i++ {
+		digits = append(digits, 0)
+	}
+	return base62DigitsToString(digits)
+}
+
 func (h SPHash) Str() string   { return string(h[:]) }
 func (h SPHash) Bytes() []byte { return h[:] }
 func (h SPHash) Big() *big.Int { return BytesToBig(h[:]) }

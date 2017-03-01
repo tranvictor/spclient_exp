@@ -1,8 +1,9 @@
 package contract
 
 import (
+	"../params"
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"golang.org/x/crypto/ssh/terminal"
 	"syscall"
 )
@@ -18,16 +19,16 @@ func (ma MinerAccount) PassPhrase() string { return ma.passphrase }
 // Get the first account in key store
 // Return nil if there's no account
 func GetAccount() *MinerAccount {
-	manager := accounts.NewManager(
-		"/Users/victor/Library/Ethereum/testnet/keystore",
-		accounts.StandardScryptN,
-		accounts.StandardScryptP,
+	keys := keystore.NewKeyStore(
+		params.KeystorePath,
+		keystore.StandardScryptN,
+		keystore.StandardScryptP,
 	)
-	acc, err := manager.AccountByIndex(0)
-	if err != nil {
+	if len(keys.Accounts()) == 0 {
 		return nil
 	}
-	keyFile := acc.File
+	acc := keys.Accounts()[0]
+	keyFile := acc.URL.Path
 	passphrase, err := promptUserPassPhrase(acc.Address.Hex())
 	if err != nil {
 		return nil
@@ -40,7 +41,7 @@ func GetAccount() *MinerAccount {
 
 func promptUserPassPhrase(acc string) (string, error) {
 	fmt.Printf("Using account address: %s\n", acc)
-	fmt.Printf("Please enter passphrase:")
+	fmt.Printf("Please enter passphrase: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	fmt.Printf("\n")
 	if err != nil {

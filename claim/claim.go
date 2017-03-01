@@ -132,6 +132,7 @@ func (c *Claim) SubmitToContract(_client *contract.ContractClient) (*types.Trans
 		amt.Insert(*s, uint32(i))
 	}
 	amt.Finalize()
+	fmt.Printf("  Submitting %d shares to contract\n", len(*c))
 	return _client.SubmitClaim(
 		big.NewInt(int64(len(*c))),
 		c.MinDifficulty(),
@@ -139,78 +140,4 @@ func (c *Claim) SubmitToContract(_client *contract.ContractClient) (*types.Trans
 		amt.RootMax(),
 		amt.RootHash().Big(),
 	)
-}
-
-var Repo *ClaimRepo
-
-type ClaimRepo struct {
-	claims         map[int]Claim
-	cClaimNumber   uint64
-	shareThreshold uint64
-	contract       *contract.ContractClient
-}
-
-func (cr *ClaimRepo) AddShare(s *share.Share) {
-	currentClaim := cr.CurrentClaim()
-	if uint64(len(currentClaim)) >= cr.shareThreshold {
-		fmt.Printf("================\n")
-		fmt.Printf("  Got enough shares to construct augmented merkle tree and submit to contract\n")
-		tx, err := currentClaim.SubmitToContract(cr.contract)
-		fmt.Printf("  Submitted by pending tx: 0x%x\n", tx.Hash())
-		if err != nil {
-			panic(err)
-		}
-		fmt.Printf("  Starting new claim\n")
-		fmt.Printf("  Getting claim number: ")
-		cr.cClaimNumber = cr.NextClaimNumber()
-		cr.claims[int(cr.cClaimNumber)] = Claim{}
-		tx, err = cr.VerifyClaim()
-		if err != nil {
-			panic(err)
-		}
-		if tx != nil {
-			fmt.Printf("  Verification submitted by pending tx: 0x%x\n", tx.Hash())
-		}
-		fmt.Printf("================\n")
-	}
-	cr.claims[int(cr.cClaimNumber)] = append(cr.claims[int(cr.cClaimNumber)][:], s)
-}
-
-func (cr ClaimRepo) GetClaim(number int) Claim {
-	return cr.claims[number]
-}
-
-func (cr ClaimRepo) getClaimToVerify() Claim {
-	// TODO: get the oldest unverified claim
-	// right now, we just get the claim that has
-	// claim number of current number - 3
-	return cr.GetClaim(int(cr.cClaimNumber) - 3)
-}
-
-func (cr ClaimRepo) VerifyClaim() (*types.Transaction, error) {
-	// TODO: Get seed from contract
-	index := 0
-	claim := cr.getClaimToVerify()
-	if claim != nil {
-		return claim.SubmitProof(cr.contract, index)
-	} else {
-		return nil, nil
-	}
-}
-
-func (cr ClaimRepo) NextClaimNumber() uint64 {
-	return cr.cClaimNumber + 1
-}
-
-func (cr ClaimRepo) CurrentClaim() Claim {
-	return cr.claims[int(cr.cClaimNumber)]
-}
-
-func LoadClaimRepo(cc *contract.ContractClient) *ClaimRepo {
-	// TODO: load from persistent storage
-	// TODO: this is currently not safe for multiple go routines
-	if Repo == nil {
-		Repo = &ClaimRepo{map[int]Claim{0: Claim{}}, 0, 16, cc}
-	}
-	return Repo
 }

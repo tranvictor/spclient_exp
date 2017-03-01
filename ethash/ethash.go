@@ -42,8 +42,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/logger"
-	"github.com/ethereum/go-ethereum/logger/glog"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/pow"
 )
 
@@ -89,14 +88,14 @@ func (cache *cache) generate() {
 	cache.gen.Do(func() {
 		started := time.Now()
 		seedHash := makeSeedHash(cache.epoch)
-		glog.V(logger.Debug).Infof("Generating cache for epoch %d (%x)", cache.epoch, seedHash)
+		log.Debug(fmt.Sprintf("Generating cache for epoch %d (%x)", cache.epoch, seedHash))
 		size := C.ethash_get_cachesize(C.uint64_t(cache.epoch * epochLength))
 		if cache.test {
 			size = cacheSizeForTesting
 		}
 		cache.ptr = C.ethash_light_new_internal(size, (*C.ethash_h256_t)(unsafe.Pointer(&seedHash[0])))
 		runtime.SetFinalizer(cache, freeCache)
-		glog.V(logger.Debug).Infof("Done generating cache for epoch %d, it took %v", cache.epoch, time.Since(started))
+		log.Debug(fmt.Sprintf("Done generating cache for epoch %d, it took %v", cache.epoch, time.Since(started)))
 	})
 }
 
@@ -135,7 +134,7 @@ type Light struct {
 func (l *Light) GetVerificationIndices(block pow.Block) []uint32 {
 	blockNum := block.NumberU64()
 	if blockNum >= epochLength*2048 {
-		glog.V(logger.Debug).Infof("block number %d too high, limit is %d", epochLength*2048)
+		log.Debug(fmt.Sprintf("block number %d too high, limit is %d", epochLength*2048))
 		return []uint32{}
 	}
 	cache := l.getCache(blockNum)
@@ -157,7 +156,7 @@ func (l *Light) SolutionState(block pow.Block, shareDifficulty *big.Int) int {
 	// to prevent DOS attacks.
 	blockNum := block.NumberU64()
 	if blockNum >= epochLength*2048 {
-		glog.V(logger.Debug).Infof("block number %d too high, limit is %d", epochLength*2048)
+		log.Debug(fmt.Sprintf("block number %d too high, limit is %d", epochLength*2048))
 		return 0
 	}
 
@@ -168,7 +167,7 @@ func (l *Light) SolutionState(block pow.Block, shareDifficulty *big.Int) int {
 	   Ethereum protocol consensus rules here which are not in scope of Ethash
 	*/
 	if difficulty.Cmp(common.Big0) == 0 || shareDifficulty.Cmp(common.Big0) == 0 {
-		glog.V(logger.Debug).Infof("invalid block difficulty or share difficulty")
+		log.Debug("invalid block difficulty or share difficulty")
 		return 0
 	}
 
@@ -206,7 +205,7 @@ func (l *Light) Verify(block pow.Block) bool {
 	// to prevent DOS attacks.
 	blockNum := block.NumberU64()
 	if blockNum >= epochLength*2048 {
-		glog.V(logger.Debug).Infof("block number %d too high, limit is %d", epochLength*2048)
+		log.Debug(fmt.Sprintf("block number %d too high, limit is %d", epochLength*2048))
 		return false
 	}
 
@@ -217,7 +216,7 @@ func (l *Light) Verify(block pow.Block) bool {
 	   Ethereum protocol consensus rules here which are not in scope of Ethash
 	*/
 	if difficulty.Cmp(common.Big0) == 0 {
-		glog.V(logger.Debug).Infof("invalid block difficulty")
+		log.Debug("invalid block difficulty")
 		return false
 	}
 
@@ -272,22 +271,22 @@ func (l *Light) getCache(blockNum uint64) *cache {
 					evict = cache
 				}
 			}
-			glog.V(logger.Debug).Infof("Evicting DAG for epoch %d in favour of epoch %d", evict.epoch, epoch)
+			log.Debug(fmt.Sprintf("Evicting DAG for epoch %d in favour of epoch %d", evict.epoch, epoch))
 			delete(l.caches, evict.epoch)
 		}
 		// If we have the new DAG pre-generated, use that, otherwise create a new one
 		if l.future != nil && l.future.epoch == epoch {
-			glog.V(logger.Debug).Infof("Using pre-generated DAG for epoch %d", epoch)
+			log.Debug(fmt.Sprintf("Using pre-generated DAG for epoch %d", epoch))
 			c, l.future = l.future, nil
 		} else {
-			glog.V(logger.Debug).Infof("No pre-generated DAG available, creating new for epoch %d", epoch)
+			log.Debug(fmt.Sprintf("No pre-generated DAG available, creating new for epoch %d", epoch))
 			c = &cache{epoch: epoch, test: l.test}
 		}
 		l.caches[epoch] = c
 
 		// If we just used up the future cache, or need a refresh, regenerate
 		if l.future == nil || l.future.epoch <= epoch {
-			glog.V(logger.Debug).Infof("Pre-generating DAG for epoch %d", epoch+1)
+			log.Debug(fmt.Sprintf("Pre-generating DAG for epoch %d", epoch+1))
 			l.future = &cache{epoch: epoch + 1, test: l.test}
 			go l.future.generate()
 		}
@@ -330,7 +329,7 @@ func (d *dag) generate() {
 		if d.dir == "" {
 			d.dir = DefaultDir
 		}
-		glog.V(logger.Info).Infof("Generating DAG for epoch %d (size %d) (%x)", d.epoch, dagSize, seedHash)
+		log.Debug(fmt.Sprintf("Generating DAG for epoch %d (size %d) (%x)", d.epoch, dagSize, seedHash))
 		// Generate a temporary cache.
 		// TODO: this could share the cache with Light
 		cache := C.ethash_light_new_internal(cacheSize, (*C.ethash_h256_t)(unsafe.Pointer(&seedHash[0])))
@@ -347,7 +346,7 @@ func (d *dag) generate() {
 			panic("ethash_full_new IO or memory error")
 		}
 		runtime.SetFinalizer(d, freeDAG)
-		glog.V(logger.Info).Infof("Done generating DAG for epoch %d, it took %v", d.epoch, time.Since(started))
+		log.Debug(fmt.Sprintf("Done generating DAG for epoch %d, it took %v", d.epoch, time.Since(started)))
 	})
 }
 
@@ -367,7 +366,7 @@ func (d *dag) Ptr() unsafe.Pointer {
 
 //export ethashGoCallback
 func ethashGoCallback(percent C.unsigned) C.int {
-	glog.V(logger.Info).Infof("Generating DAG: %d%%", percent)
+	log.Debug(fmt.Sprintf("Generating DAG: %d%%", percent))
 	return 0
 }
 

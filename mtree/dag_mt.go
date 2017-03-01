@@ -60,6 +60,13 @@ func NewDagTree() *DagTree {
 	}
 }
 
+func (dt DagTree) RootHash() common.SPHash {
+	if dt.finalized {
+		return common.SPHash(dt.Root().(DagData))
+	}
+	panic("SP Merkle tree needs to be finalized by calling mt.Finalize()")
+}
+
 // return only one array with necessary hashes for each
 // index in order. Element's hash and root are not included
 // eg. registered indexes are 1, 2, each needs 2 hashes

@@ -1,11 +1,12 @@
 package rpc
 
 import (
+	"fmt"
 	"github.com/ethereum/go-ethereum/rpc"
 	"net/http"
 )
 
-var RPCServer = NewRPCServer()
+var DefaultServer *Server
 
 type Server struct {
 	Port      uint16
@@ -24,5 +25,6 @@ func NewRPCServer() *Server {
 }
 
 func (s Server) Start() {
+	fmt.Printf("RPC Server is running...\n")
 	s.server.ListenAndServe()
 }

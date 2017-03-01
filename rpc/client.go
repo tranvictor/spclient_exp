@@ -2,6 +2,7 @@ package rpc
 
 import (
 	spcommon "../common"
+	"../params"
 	"fmt"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -30,12 +31,7 @@ type jsonHeader struct {
 	Nonce       *types.BlockNonce `json:"nonce"`
 }
 
-var Geth = NewGethRPCClient()
-
-// var ContractAddress = "0xe034afdcc2ba0441ff215ee9ba0da3e86450108d"
-var ContractAddress = "0x1149eD647cae5B4C3f4A2dca4F68c83683e33e14"
-var ExtraData = "smartpool-aZ09v-186a0"
-var ShareDif = "0x186a0"
+var DefaultGethClient *GethClient
 
 type GethClient struct {
 	client *rpc.Client
@@ -59,9 +55,9 @@ func (g GethClient) GetPendingBlockHeader() *types.Header {
 	result.GasLimit = (*big.Int)(header.GasLimit)
 	result.GasUsed = (*big.Int)(header.GasUsed)
 	result.Time = (*big.Int)(header.Time)
-	result.Coinbase = common.HexToAddress(ContractAddress)
+	result.Coinbase = common.HexToAddress(params.ContractAddress)
 	// result.Extra = []byte("0xd883010505846765746887676f312e372e348664617277696e")
-	result.Extra = []byte(ExtraData)
+	result.Extra = []byte(params.ExtraData)
 	if header.Bloom == nil {
 		result.Bloom = types.Bloom{}
 	} else {
@@ -115,10 +111,10 @@ func (g GethClient) SubmitWork(nonce types.BlockNonce, hash, mixDigest common.Ha
 	return result
 }
 
-func NewGethRPCClient() *GethClient {
+func NewGethRPCClient() (*GethClient, error) {
 	client, err := rpc.Dial("http://127.0.0.1:8545")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return &GethClient{client}
+	return &GethClient{client}, nil
 }

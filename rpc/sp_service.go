@@ -15,7 +15,7 @@ type SmartPoolService struct{}
 
 func (SmartPoolService) GetWork() ([3]string, error) {
 	var res [3]string
-	w := Geth.GetWork()
+	w := DefaultGethClient.GetWork()
 	spcommon.WorkPool[w.PoWHash()] = w
 	// w.PrintInfo()
 	res[0] = w.PoWHash().Hex()
@@ -29,7 +29,7 @@ func (SmartPoolService) GetWork() ([3]string, error) {
 }
 
 func (SmartPoolService) SubmitHashrate(hashrate hexutil.Uint64, id common.Hash) bool {
-	return Geth.SubmitHashrate(hashrate, id)
+	return DefaultGethClient.SubmitHashrate(hashrate, id)
 }
 
 func (SmartPoolService) SubmitWork(nonce types.BlockNonce, hash, mixDigest common.Hash) bool {
@@ -41,19 +41,15 @@ func (SmartPoolService) SubmitWork(nonce types.BlockNonce, hash, mixDigest commo
 	}
 	// fmt.Printf("Work submitted with: nonce(%v) mixDigest(%v) hash(%s)\n", nonce, mixDigest, hash.Hex())
 	fmt.Printf(".")
+	if DefaultGethClient.SubmitWork(nonce, hash, mixDigest) {
+		fmt.Printf("\n==========YAY found a full solution==========\n")
+	}
 	s := share.NewShare(work.BlockHeader(), work.ShareDifficulty())
 	s.AcceptSolution(nonce, mixDigest)
 	if s.SolutionState == spcommon.FullBlockSolution {
-		if Geth.SubmitWork(nonce, hash, mixDigest) {
-			fmt.Printf("\n==========YAY found a full solution==========\n")
-			delete(spcommon.WorkPool, hash)
-			return true
-		} else {
-			return false
-		}
+		delete(spcommon.WorkPool, hash)
 	} else if s.SolutionState == spcommon.ValidShare {
-		claim.Repo.AddShare(s)
-		return true
+		claim.DefaultClaimRepo.AddShare(s)
 	} else {
 		return false
 	}

@@ -9,7 +9,6 @@ import (
 type Contract interface {
 	Version(opts *bind.CallOpts) (string, error)
 	GetClaimSeed(opts *bind.CallOpts) (*big.Int, error)
-	Register(opts *bind.TransactOpts, timestamp *big.Int) (*types.Transaction, error)
 	SubmitClaim(
 		opts *bind.TransactOpts,
 		numShares *big.Int,
