@@ -78,6 +78,53 @@ func processDuringRead(
 	}
 }
 
+// TODO: remove this
+func (c *Claim) SubmitProof_debug(_client *contract.ContractClient, index int) (*big.Int, error) {
+	sort.Sort(c)
+	amt := mtree.NewAugTree()
+	amt.RegisterIndex(uint32(index))
+	for i, s := range *c {
+		amt.Insert(*s, uint32(i))
+	}
+	amt.Finalize()
+	requestedShare := (*c)[index]
+	rlpHeader, _ := requestedShare.RlpHeaderWithoutNonce()
+	nonce := requestedShare.NonceBig()
+	shareIndex := big.NewInt(int64(index))
+	augCountersBranch := amt.CounterBranchArray()
+	augHashesBranch := amt.HashBranchArray()
+
+	eth := ethash.New()
+	indices := eth.GetVerificationIndices(requestedShare)
+	seedHash, err := ethash.GetSeedHash(requestedShare.NumberU64())
+	if err != nil {
+		panic(err)
+	}
+	path := filepath.Join(
+		ethash.DefaultDir,
+		fmt.Sprintf("full-R%s-%s", "23", hex.EncodeToString(seedHash[:8])),
+	)
+	mt := mtree.NewDagTree()
+	mt.RegisterIndex(indices...)
+	processDuringRead(path, mt)
+	mt.Finalize()
+	sproof := share.ShareProof{
+		mt.AllDAGElements(),
+		mt.AllBranchesArray(),
+	}
+	dataSetLookup := sproof.DAGElementArray()
+	witnessForLookup := sproof.DAGProofArray()
+	return _client.VerifyClaim_debug(
+		rlpHeader,
+		nonce,
+		shareIndex,
+		dataSetLookup,
+		witnessForLookup,
+		augCountersBranch,
+		augHashesBranch,
+	)
+}
+
 // TODO: should break this function into smaller meaningful ones
 func (c *Claim) SubmitProof(_client *contract.ContractClient, index int) (*types.Transaction, error) {
 	sort.Sort(c)

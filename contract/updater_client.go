@@ -24,6 +24,14 @@ func (uc UpdaterClient) VerifyExtraData(extraData [32]byte, minerId [32]byte, di
 	return uc.contract.VerifyExtraData(nil, extraData, minerId, difficulty)
 }
 
+func (uc UpdaterClient) VerifyExtraData_debug(extraData [32]byte, minerId [32]byte, difficulty *big.Int) (*big.Int, error) {
+	return uc.contract.VerifyExtraData_debug(nil, extraData, minerId, difficulty)
+}
+
+func (uc UpdaterClient) VerifyClaim_debug(rlpHeader []byte, nonce *big.Int, shareIndex *big.Int, dataSetLookup []*big.Int, witnessForLookup []*big.Int, augCountersBranch []*big.Int, augHashesBranch []*big.Int) (*big.Int, error) {
+	return uc.contract.VerifyClaim_debug(nil, rlpHeader, nonce, shareIndex, dataSetLookup, witnessForLookup, augCountersBranch, augHashesBranch)
+}
+
 func (uc UpdaterClient) To62Encoding(id *big.Int, numChars *big.Int) ([32]byte, error) {
 	return uc.contract.To62Encoding(nil, id, numChars)
 }

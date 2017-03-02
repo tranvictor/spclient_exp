@@ -2,13 +2,15 @@ package main
 
 import (
 	"./claim"
+	"./client"
 	spcommon "./common"
 	"./contract"
 	"./ethash"
 	"./mtree"
 	"./params"
-	"./rpc"
+	"./server"
 	"./share"
+	"./txs"
 	"bufio"
 	"encoding/hex"
 	"fmt"
@@ -95,22 +97,22 @@ func Initialize() bool {
 	// Setting
 	params.NoSharePerClaim = uint32(13)
 	params.ShareDifficulty = big.NewInt(100000)
-	params.SubmitInterval = 2 * time.Minute
-	params.ContractAddress = "0x2cfc55ef68956d25c91d681117c422188d7e43ac"
+	params.SubmitInterval = 1 * time.Minute
+	params.ContractAddress = "0x9e7a1925fa43d5f47b36e2e27f84adae95ddd845"
 	// TODO: Need better way to get ipc file
 	// params.IPCPath = "/Users/victor/Library/Ethereum/testnet/geth.ipc"
-	params.IPCPath = "/Users/victor/Library/Ethereum/geth.ipc"
+	params.IPCPath = "/Users/victor/Dropbox/Project/BlockChain/SmartPool/spclient_exp/.privatedata/geth.ipc"
 	// TODO: Need better way to get keystore path
 	// params.KeystorePath = "/Users/victor/Library/Ethereum/testnet/keystore"
-	params.KeystorePath = "/Users/victor/Library/Ethereum/keystore"
+	params.KeystorePath = "/Users/victor/Dropbox/Project/BlockChain/SmartPool/spclient_exp/.privatedata/keystore"
 	// TODO: Need better way to get default address for miner
-	params.MinerAddress = "0xe034afdcc2ba0441ff215ee9ba0da3e86450108d"
+	params.MinerAddress = "0xad42beeb07db31149f5d2c4bd33d01c6d7c34116"
 	address := common.HexToAddress(params.MinerAddress)
 	params.ExtraData = buildExtraData(address, big.NewInt(100000))
 
 	// Share instances
 	var err error
-	rpc.DefaultGethClient, err = rpc.NewGethRPCClient()
+	client.DefaultGethClient, err = client.NewGethRPCClient()
 	if err != nil {
 		fmt.Printf("Geth RPC server is unavailable.\n")
 		fmt.Printf("Make sure you have Geth installed. If you do, you can run geth by following command (Note: --etherbase and --extradata params are required.):\n")
@@ -119,7 +121,7 @@ func Initialize() bool {
 			params.ContractAddress, params.ExtraData)
 		return false
 	}
-	rpc.DefaultServer = rpc.NewRPCServer()
+	server.DefaultServer = server.NewRPCServer()
 	contract.DefaultContractClient, err = contract.NewContractClient()
 	if err != nil {
 		fmt.Printf("Geth RPC server is unavailable.\n")
@@ -132,6 +134,31 @@ func Initialize() bool {
 	claim.DefaultClaimRepo = claim.LoadClaimRepo(contract.DefaultContractClient)
 	// TODO: check current geth setup to see if coinbase address
 	// and extradata is set properly
+	return registerToPool(address)
+}
+
+func registerToPool(address common.Address) bool {
+	if !contract.DefaultContractClient.IsRegistered() {
+		if contract.DefaultContractClient.CanRegister() {
+			tx, err := contract.DefaultContractClient.Register(address)
+			if err != nil {
+				fmt.Printf("Unable to register to the pool: %s\n", err)
+				return false
+			}
+			fmt.Printf("Registering to the pool. Please wait...")
+			txs.NewTxWatcher(tx).Wait()
+			if !contract.DefaultContractClient.IsRegistered() {
+				fmt.Printf("Unable to register to the pool. You might try again.")
+				return false
+			}
+			fmt.Printf("Done.\n")
+			return true
+		} else {
+			fmt.Printf("Your etherbase address couldn't register to the pool. You need to try another address.\n")
+			return false
+		}
+	}
+	fmt.Printf("The address is already registered to the pool. Good to go.\n")
 	return true
 }
 
@@ -141,7 +168,7 @@ func testAugMerkleTree() {
 	input.ShareIndex = 0
 	cl := claim.Claim{}
 	for i := 0; i < input.NumShare; i++ {
-		h := rpc.DefaultGethClient.GetBlockHeader(3141592 - i)
+		h := client.DefaultGethClient.GetBlockHeader(3141592 - i)
 		s := share.NewShare(h, h.Difficulty)
 		cl = append(cl[:], s)
 	}
@@ -303,23 +330,23 @@ func testDatasetMerkleTree(datasetPath string, indices []uint32, input *InputFor
 }
 
 func testGetWork() {
-	w := rpc.DefaultGethClient.GetWork()
+	w := client.DefaultGethClient.GetWork()
 	w.PrintInfo()
 }
 
 func testRPCServer() {
-	server := rpc.NewRPCServer()
+	server := server.NewRPCServer()
 	server.Start()
 }
 
 func testInteractWithContract() {
-	rpc.DefaultServer.Start()
+	server.DefaultServer.Start()
 }
 
 func testExtraData() {
 	updaterClient := contract.NewUpdaterClient()
-	rpc.DefaultGethClient.GetWork()
-	pendingBlock := rpc.DefaultGethClient.GetPendingBlockHeader()
+	client.DefaultGethClient.GetWork()
+	pendingBlock := client.DefaultGethClient.GetPendingBlockHeader()
 	diff := big.NewInt(100000)
 	extraData := pendingBlock.Extra
 	minerAddress := common.HexToAddress(params.MinerAddress)
@@ -335,7 +362,7 @@ func testExtraData() {
 	id32 := [32]byte{}
 	copy(extra32[:], extraData[:])
 	fmt.Printf("extra32: %v\n", extra32)
-	copy(id32[:], []byte(encodedDiff)[:])
+	copy(id32[21:], []byte(encodedID)[:])
 	ok, _ := updaterClient.VerifyExtraData(extra32, id32, diff)
 	fmt.Printf("Checking extra data: %s\n", ok)
 	encoded, _ := updaterClient.To62Encoding(diff, big.NewInt(11))
@@ -372,6 +399,8 @@ func testSubmitEpochInfo(blockNumber uint64) {
 		fmt.Printf("%s\n", err)
 	}
 	fmt.Printf("Transfer pending: 0x%x\n", tx.Hash())
+	txs.NewTxWatcher(tx).Wait()
+	fmt.Printf("Verified: 0x%x\n", tx.Hash())
 }
 
 func main() {
@@ -397,10 +426,10 @@ func main() {
 	// input := InputForYaron{}
 	// testDatasetMerkleTree(datasetPath, indicesFromYaron, &input)
 	// testVerifyShare()
-	testAugMerkleTree()
+	// testAugMerkleTree()
 	// testGetWork()
 	// testRPCServer()
-	// testInteractWithContract()
+	testInteractWithContract()
 	// testExtraData()
-	// testSubmitEpochInfo(586678)
+	// testSubmitEpochInfo(20)
 }

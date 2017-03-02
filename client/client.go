@@ -1,4 +1,4 @@
-package rpc
+package client
 
 import (
 	spcommon "../common"
@@ -109,6 +109,16 @@ func (g GethClient) SubmitWork(nonce types.BlockNonce, hash, mixDigest common.Ha
 	var result bool
 	g.client.Call(&result, "eth_submitWork", nonce, hash, mixDigest)
 	return result
+}
+
+type jsonTransaction struct {
+	BlockHash string `json:"blockHash"`
+}
+
+func (g GethClient) IsVerified(h common.Hash) bool {
+	result := jsonTransaction{}
+	g.client.Call(&result, "eth_getTransactionByHash", h)
+	return result.BlockHash != "0x0000000000000000000000000000000000000000000000000000000000000000"
 }
 
 func NewGethRPCClient() (*GethClient, error) {

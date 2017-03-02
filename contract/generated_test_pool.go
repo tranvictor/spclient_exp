@@ -14,7 +14,7 @@ import (
 )
 
 // TestPoolABI is the input ABI used to generate the binding from.
-const TestPoolABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"newVersionReleased\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"x\",\"type\":\"uint256[]\"}],\"name\":\"array\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isRegistered\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinerId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"rlpHeader\",\"type\":\"bytes\"},{\"name\":\"nonce\",\"type\":\"uint256\"},{\"name\":\"shareIndex\",\"type\":\"uint256\"},{\"name\":\"dataSetLookup\",\"type\":\"uint256[]\"},{\"name\":\"witnessForLookup\",\"type\":\"uint256[]\"},{\"name\":\"augCountersBranch\",\"type\":\"uint256[]\"},{\"name\":\"augHashesBranch\",\"type\":\"uint256[]\"}],\"name\":\"verifyClaim\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getClaimSeed\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"canRegister\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"header\",\"type\":\"bytes32\"},{\"name\":\"nonceLe\",\"type\":\"bytes8\"},{\"name\":\"fullSizeIn128Resultion\",\"type\":\"uint256\"},{\"name\":\"dataSetLookup\",\"type\":\"uint256[]\"},{\"name\":\"witnessForLookup\",\"type\":\"uint256[]\"},{\"name\":\"branchSize\",\"type\":\"uint256\"},{\"name\":\"root\",\"type\":\"uint256\"}],\"name\":\"hashimoto\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"merkleRoot\",\"type\":\"uint128\"},{\"name\":\"fullSizeIn128Resultion\",\"type\":\"uint64\"},{\"name\":\"branchDepth\",\"type\":\"uint64\"},{\"name\":\"epoch\",\"type\":\"uint256\"}],\"name\":\"setEpochData\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"x\",\"type\":\"bytes\"}],\"name\":\"bytesstream\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"extraData\",\"type\":\"bytes32\"},{\"name\":\"minerId\",\"type\":\"bytes32\"},{\"name\":\"difficulty\",\"type\":\"uint256\"}],\"name\":\"verifyExtraData\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"timestamp\",\"type\":\"uint256\"},{\"name\":\"paymentAddress\",\"type\":\"address\"}],\"name\":\"register\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"declareNewerVersion\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"numShares\",\"type\":\"uint256\"},{\"name\":\"difficulty\",\"type\":\"uint256\"},{\"name\":\"min\",\"type\":\"uint256\"},{\"name\":\"max\",\"type\":\"uint256\"},{\"name\":\"augMerkle\",\"type\":\"uint256\"}],\"name\":\"submitClaim\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\"},{\"name\":\"numChars\",\"type\":\"uint256\"}],\"name\":\"to62Encoding\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"}],\"name\":\"Debug\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"},{\"indexed\":false,\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"ErrorLog\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Pay\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"},{\"indexed\":false,\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"VerifyAgt\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Log\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Result\",\"type\":\"event\"}]"
+const TestPoolABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"newVersionReleased\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"x\",\"type\":\"uint256[]\"}],\"name\":\"array\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isRegistered\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getMinerId\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"rlpHeader\",\"type\":\"bytes\"},{\"name\":\"nonce\",\"type\":\"uint256\"},{\"name\":\"shareIndex\",\"type\":\"uint256\"},{\"name\":\"dataSetLookup\",\"type\":\"uint256[]\"},{\"name\":\"witnessForLookup\",\"type\":\"uint256[]\"},{\"name\":\"augCountersBranch\",\"type\":\"uint256[]\"},{\"name\":\"augHashesBranch\",\"type\":\"uint256[]\"}],\"name\":\"verifyClaim\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"paymentAddress\",\"type\":\"address\"}],\"name\":\"register\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getClaimSeed\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"canRegister\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"header\",\"type\":\"bytes32\"},{\"name\":\"nonceLe\",\"type\":\"bytes8\"},{\"name\":\"fullSizeIn128Resultion\",\"type\":\"uint256\"},{\"name\":\"dataSetLookup\",\"type\":\"uint256[]\"},{\"name\":\"witnessForLookup\",\"type\":\"uint256[]\"},{\"name\":\"branchSize\",\"type\":\"uint256\"},{\"name\":\"root\",\"type\":\"uint256\"}],\"name\":\"hashimoto\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"rlpHeader\",\"type\":\"bytes\"},{\"name\":\"nonce\",\"type\":\"uint256\"},{\"name\":\"shareIndex\",\"type\":\"uint256\"},{\"name\":\"dataSetLookup\",\"type\":\"uint256[]\"},{\"name\":\"witnessForLookup\",\"type\":\"uint256[]\"},{\"name\":\"augCountersBranch\",\"type\":\"uint256[]\"},{\"name\":\"augHashesBranch\",\"type\":\"uint256[]\"}],\"name\":\"verifyClaim_debug\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"epochData\",\"outputs\":[{\"name\":\"merkleRoot\",\"type\":\"uint128\"},{\"name\":\"fullSizeIn128Resultion\",\"type\":\"uint64\"},{\"name\":\"branchDepth\",\"type\":\"uint64\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"merkleRoot\",\"type\":\"uint128\"},{\"name\":\"fullSizeIn128Resultion\",\"type\":\"uint64\"},{\"name\":\"branchDepth\",\"type\":\"uint64\"},{\"name\":\"epoch\",\"type\":\"uint256\"}],\"name\":\"setEpochData\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"x\",\"type\":\"bytes\"}],\"name\":\"bytesstream\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"extraData\",\"type\":\"bytes32\"},{\"name\":\"minerId\",\"type\":\"bytes32\"},{\"name\":\"difficulty\",\"type\":\"uint256\"}],\"name\":\"verifyExtraData\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"extraData\",\"type\":\"bytes32\"},{\"name\":\"minerId\",\"type\":\"bytes32\"},{\"name\":\"difficulty\",\"type\":\"uint256\"}],\"name\":\"verifyExtraData_debug\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"declareNewerVersion\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"numShares\",\"type\":\"uint256\"},{\"name\":\"difficulty\",\"type\":\"uint256\"},{\"name\":\"min\",\"type\":\"uint256\"},{\"name\":\"max\",\"type\":\"uint256\"},{\"name\":\"augMerkle\",\"type\":\"uint256\"}],\"name\":\"submitClaim\",\"outputs\":[],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"existingIds\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"id\",\"type\":\"uint256\"},{\"name\":\"numChars\",\"type\":\"uint256\"}],\"name\":\"to62Encoding\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"type\":\"function\"},{\"inputs\":[],\"payable\":false,\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"}],\"name\":\"Debug\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"},{\"indexed\":false,\"name\":\"i\",\"type\":\"uint256\"}],\"name\":\"ErrorLog\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"Pay\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"msg\",\"type\":\"string\"},{\"indexed\":false,\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"VerifyAgt\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Log\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"result\",\"type\":\"uint256\"}],\"name\":\"Result\",\"type\":\"event\"}]"
 
 // TestPool is an auto generated Go binding around an Ethereum contract.
 type TestPool struct {
@@ -167,6 +167,72 @@ func (_TestPool *TestPoolSession) CanRegister() (bool, error) {
 // Solidity: function canRegister() constant returns(bool)
 func (_TestPool *TestPoolCallerSession) CanRegister() (bool, error) {
 	return _TestPool.Contract.CanRegister(&_TestPool.CallOpts)
+}
+
+// EpochData is a free data retrieval call binding the contract method 0x6e821b2e.
+//
+// Solidity: function epochData( uint256) constant returns(merkleRoot uint128, fullSizeIn128Resultion uint64, branchDepth uint64)
+func (_TestPool *TestPoolCaller) EpochData(opts *bind.CallOpts, arg0 *big.Int) (struct {
+	MerkleRoot             *big.Int
+	FullSizeIn128Resultion uint64
+	BranchDepth            uint64
+}, error) {
+	ret := new(struct {
+		MerkleRoot             *big.Int
+		FullSizeIn128Resultion uint64
+		BranchDepth            uint64
+	})
+	out := ret
+	err := _TestPool.contract.Call(opts, out, "epochData", arg0)
+	return *ret, err
+}
+
+// EpochData is a free data retrieval call binding the contract method 0x6e821b2e.
+//
+// Solidity: function epochData( uint256) constant returns(merkleRoot uint128, fullSizeIn128Resultion uint64, branchDepth uint64)
+func (_TestPool *TestPoolSession) EpochData(arg0 *big.Int) (struct {
+	MerkleRoot             *big.Int
+	FullSizeIn128Resultion uint64
+	BranchDepth            uint64
+}, error) {
+	return _TestPool.Contract.EpochData(&_TestPool.CallOpts, arg0)
+}
+
+// EpochData is a free data retrieval call binding the contract method 0x6e821b2e.
+//
+// Solidity: function epochData( uint256) constant returns(merkleRoot uint128, fullSizeIn128Resultion uint64, branchDepth uint64)
+func (_TestPool *TestPoolCallerSession) EpochData(arg0 *big.Int) (struct {
+	MerkleRoot             *big.Int
+	FullSizeIn128Resultion uint64
+	BranchDepth            uint64
+}, error) {
+	return _TestPool.Contract.EpochData(&_TestPool.CallOpts, arg0)
+}
+
+// ExistingIds is a free data retrieval call binding the contract method 0xee385304.
+//
+// Solidity: function existingIds( bytes32) constant returns(bool)
+func (_TestPool *TestPoolCaller) ExistingIds(opts *bind.CallOpts, arg0 [32]byte) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _TestPool.contract.Call(opts, out, "existingIds", arg0)
+	return *ret0, err
+}
+
+// ExistingIds is a free data retrieval call binding the contract method 0xee385304.
+//
+// Solidity: function existingIds( bytes32) constant returns(bool)
+func (_TestPool *TestPoolSession) ExistingIds(arg0 [32]byte) (bool, error) {
+	return _TestPool.Contract.ExistingIds(&_TestPool.CallOpts, arg0)
+}
+
+// ExistingIds is a free data retrieval call binding the contract method 0xee385304.
+//
+// Solidity: function existingIds( bytes32) constant returns(bool)
+func (_TestPool *TestPoolCallerSession) ExistingIds(arg0 [32]byte) (bool, error) {
+	return _TestPool.Contract.ExistingIds(&_TestPool.CallOpts, arg0)
 }
 
 // GetClaimSeed is a free data retrieval call binding the contract method 0x47740bdc.
@@ -351,6 +417,32 @@ func (_TestPool *TestPoolCallerSession) To62Encoding(id *big.Int, numChars *big.
 	return _TestPool.Contract.To62Encoding(&_TestPool.CallOpts, id, numChars)
 }
 
+// VerifyClaim_debug is a free data retrieval call binding the contract method 0x60e5b418.
+//
+// Solidity: function verifyClaim_debug(rlpHeader bytes, nonce uint256, shareIndex uint256, dataSetLookup uint256[], witnessForLookup uint256[], augCountersBranch uint256[], augHashesBranch uint256[]) constant returns(uint256)
+func (_TestPool *TestPoolCaller) VerifyClaim_debug(opts *bind.CallOpts, rlpHeader []byte, nonce *big.Int, shareIndex *big.Int, dataSetLookup []*big.Int, witnessForLookup []*big.Int, augCountersBranch []*big.Int, augHashesBranch []*big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _TestPool.contract.Call(opts, out, "verifyClaim_debug", rlpHeader, nonce, shareIndex, dataSetLookup, witnessForLookup, augCountersBranch, augHashesBranch)
+	return *ret0, err
+}
+
+// VerifyClaim_debug is a free data retrieval call binding the contract method 0x60e5b418.
+//
+// Solidity: function verifyClaim_debug(rlpHeader bytes, nonce uint256, shareIndex uint256, dataSetLookup uint256[], witnessForLookup uint256[], augCountersBranch uint256[], augHashesBranch uint256[]) constant returns(uint256)
+func (_TestPool *TestPoolSession) VerifyClaim_debug(rlpHeader []byte, nonce *big.Int, shareIndex *big.Int, dataSetLookup []*big.Int, witnessForLookup []*big.Int, augCountersBranch []*big.Int, augHashesBranch []*big.Int) (*big.Int, error) {
+	return _TestPool.Contract.VerifyClaim_debug(&_TestPool.CallOpts, rlpHeader, nonce, shareIndex, dataSetLookup, witnessForLookup, augCountersBranch, augHashesBranch)
+}
+
+// VerifyClaim_debug is a free data retrieval call binding the contract method 0x60e5b418.
+//
+// Solidity: function verifyClaim_debug(rlpHeader bytes, nonce uint256, shareIndex uint256, dataSetLookup uint256[], witnessForLookup uint256[], augCountersBranch uint256[], augHashesBranch uint256[]) constant returns(uint256)
+func (_TestPool *TestPoolCallerSession) VerifyClaim_debug(rlpHeader []byte, nonce *big.Int, shareIndex *big.Int, dataSetLookup []*big.Int, witnessForLookup []*big.Int, augCountersBranch []*big.Int, augHashesBranch []*big.Int) (*big.Int, error) {
+	return _TestPool.Contract.VerifyClaim_debug(&_TestPool.CallOpts, rlpHeader, nonce, shareIndex, dataSetLookup, witnessForLookup, augCountersBranch, augHashesBranch)
+}
+
 // VerifyExtraData is a free data retrieval call binding the contract method 0xa442d820.
 //
 // Solidity: function verifyExtraData(extraData bytes32, minerId bytes32, difficulty uint256) constant returns(bool)
@@ -375,6 +467,32 @@ func (_TestPool *TestPoolSession) VerifyExtraData(extraData [32]byte, minerId [3
 // Solidity: function verifyExtraData(extraData bytes32, minerId bytes32, difficulty uint256) constant returns(bool)
 func (_TestPool *TestPoolCallerSession) VerifyExtraData(extraData [32]byte, minerId [32]byte, difficulty *big.Int) (bool, error) {
 	return _TestPool.Contract.VerifyExtraData(&_TestPool.CallOpts, extraData, minerId, difficulty)
+}
+
+// VerifyExtraData_debug is a free data retrieval call binding the contract method 0xe33a97d8.
+//
+// Solidity: function verifyExtraData_debug(extraData bytes32, minerId bytes32, difficulty uint256) constant returns(uint256)
+func (_TestPool *TestPoolCaller) VerifyExtraData_debug(opts *bind.CallOpts, extraData [32]byte, minerId [32]byte, difficulty *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _TestPool.contract.Call(opts, out, "verifyExtraData_debug", extraData, minerId, difficulty)
+	return *ret0, err
+}
+
+// VerifyExtraData_debug is a free data retrieval call binding the contract method 0xe33a97d8.
+//
+// Solidity: function verifyExtraData_debug(extraData bytes32, minerId bytes32, difficulty uint256) constant returns(uint256)
+func (_TestPool *TestPoolSession) VerifyExtraData_debug(extraData [32]byte, minerId [32]byte, difficulty *big.Int) (*big.Int, error) {
+	return _TestPool.Contract.VerifyExtraData_debug(&_TestPool.CallOpts, extraData, minerId, difficulty)
+}
+
+// VerifyExtraData_debug is a free data retrieval call binding the contract method 0xe33a97d8.
+//
+// Solidity: function verifyExtraData_debug(extraData bytes32, minerId bytes32, difficulty uint256) constant returns(uint256)
+func (_TestPool *TestPoolCallerSession) VerifyExtraData_debug(extraData [32]byte, minerId [32]byte, difficulty *big.Int) (*big.Int, error) {
+	return _TestPool.Contract.VerifyExtraData_debug(&_TestPool.CallOpts, extraData, minerId, difficulty)
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
@@ -466,25 +584,25 @@ func (_TestPool *TestPoolTransactorSession) DeclareNewerVersion() (*types.Transa
 	return _TestPool.Contract.DeclareNewerVersion(&_TestPool.TransactOpts)
 }
 
-// Register is a paid mutator transaction binding the contract method 0xdbbdf083.
+// Register is a paid mutator transaction binding the contract method 0x4420e486.
 //
-// Solidity: function register(timestamp uint256, paymentAddress address) returns()
-func (_TestPool *TestPoolTransactor) Register(opts *bind.TransactOpts, timestamp *big.Int, paymentAddress common.Address) (*types.Transaction, error) {
-	return _TestPool.contract.Transact(opts, "register", timestamp, paymentAddress)
+// Solidity: function register(paymentAddress address) returns()
+func (_TestPool *TestPoolTransactor) Register(opts *bind.TransactOpts, paymentAddress common.Address) (*types.Transaction, error) {
+	return _TestPool.contract.Transact(opts, "register", paymentAddress)
 }
 
-// Register is a paid mutator transaction binding the contract method 0xdbbdf083.
+// Register is a paid mutator transaction binding the contract method 0x4420e486.
 //
-// Solidity: function register(timestamp uint256, paymentAddress address) returns()
-func (_TestPool *TestPoolSession) Register(timestamp *big.Int, paymentAddress common.Address) (*types.Transaction, error) {
-	return _TestPool.Contract.Register(&_TestPool.TransactOpts, timestamp, paymentAddress)
+// Solidity: function register(paymentAddress address) returns()
+func (_TestPool *TestPoolSession) Register(paymentAddress common.Address) (*types.Transaction, error) {
+	return _TestPool.Contract.Register(&_TestPool.TransactOpts, paymentAddress)
 }
 
-// Register is a paid mutator transaction binding the contract method 0xdbbdf083.
+// Register is a paid mutator transaction binding the contract method 0x4420e486.
 //
-// Solidity: function register(timestamp uint256, paymentAddress address) returns()
-func (_TestPool *TestPoolTransactorSession) Register(timestamp *big.Int, paymentAddress common.Address) (*types.Transaction, error) {
-	return _TestPool.Contract.Register(&_TestPool.TransactOpts, timestamp, paymentAddress)
+// Solidity: function register(paymentAddress address) returns()
+func (_TestPool *TestPoolTransactorSession) Register(paymentAddress common.Address) (*types.Transaction, error) {
+	return _TestPool.Contract.Register(&_TestPool.TransactOpts, paymentAddress)
 }
 
 // SetEpochData is a paid mutator transaction binding the contract method 0x820a22c0.

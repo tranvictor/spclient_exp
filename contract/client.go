@@ -45,6 +45,40 @@ func (cc ContractClient) VerifyClaim(
 		witnessForLookup, augCountersBranch, augHashesBranch)
 }
 
+// TODO: remove this
+func (cc ContractClient) VerifyClaim_debug(
+	rlpHeader []byte,
+	nonce *big.Int,
+	shareIndex *big.Int,
+	dataSetLookup []*big.Int,
+	witnessForLookup []*big.Int,
+	augCountersBranch []*big.Int,
+	augHashesBranch []*big.Int) (*big.Int, error) {
+	return cc.contract.VerifyClaim_debug(nil,
+		rlpHeader, nonce, shareIndex, dataSetLookup,
+		witnessForLookup, augCountersBranch, augHashesBranch)
+}
+
+func (cc ContractClient) IsRegistered() bool {
+	ok, err := cc.contract.IsRegistered(nil)
+	if err != nil {
+		return false
+	}
+	return ok
+}
+
+func (cc ContractClient) CanRegister() bool {
+	ok, err := cc.contract.CanRegister(nil)
+	if err != nil {
+		return false
+	}
+	return ok
+}
+
+func (cc ContractClient) Register(paymentAddress common.Address) (*types.Transaction, error) {
+	return cc.contract.Register(cc.transactor, paymentAddress)
+}
+
 func (cc ContractClient) Version() string {
 	v, err := cc.contract.Version(nil)
 	if err != nil {

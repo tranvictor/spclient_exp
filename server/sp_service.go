@@ -1,7 +1,8 @@
-package rpc
+package server
 
 import (
 	"../claim"
+	"../client"
 	spcommon "../common"
 	"../share"
 	"fmt"
@@ -15,7 +16,7 @@ type SmartPoolService struct{}
 
 func (SmartPoolService) GetWork() ([3]string, error) {
 	var res [3]string
-	w := DefaultGethClient.GetWork()
+	w := client.DefaultGethClient.GetWork()
 	spcommon.WorkPool[w.PoWHash()] = w
 	// w.PrintInfo()
 	res[0] = w.PoWHash().Hex()
@@ -29,7 +30,7 @@ func (SmartPoolService) GetWork() ([3]string, error) {
 }
 
 func (SmartPoolService) SubmitHashrate(hashrate hexutil.Uint64, id common.Hash) bool {
-	return DefaultGethClient.SubmitHashrate(hashrate, id)
+	return client.DefaultGethClient.SubmitHashrate(hashrate, id)
 }
 
 func (SmartPoolService) SubmitWork(nonce types.BlockNonce, hash, mixDigest common.Hash) bool {
@@ -41,7 +42,7 @@ func (SmartPoolService) SubmitWork(nonce types.BlockNonce, hash, mixDigest commo
 	}
 	// fmt.Printf("Work submitted with: nonce(%v) mixDigest(%v) hash(%s)\n", nonce, mixDigest, hash.Hex())
 	fmt.Printf(".")
-	if DefaultGethClient.SubmitWork(nonce, hash, mixDigest) {
+	if client.DefaultGethClient.SubmitWork(nonce, hash, mixDigest) {
 		fmt.Printf("\n==========YAY found a full solution==========\n")
 	}
 	s := share.NewShare(work.BlockHeader(), work.ShareDifficulty())
